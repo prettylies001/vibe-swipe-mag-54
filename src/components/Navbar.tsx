@@ -21,15 +21,7 @@ const Navbar = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-3 md:top-0 md:bottom-auto md:border-t-0 md:border-b dark-transition">
       <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center md:mr-6">
-          <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold bg-gradient-to-r from-aselit-purple to-aselit-blue bg-clip-text text-transparent">
-              Aselit
-            </span>
-          </Link>
-        </div>
-        
-        <div className="flex justify-center flex-1 md:justify-start">
+        <div className="flex justify-center flex-1">
           <div className="flex space-x-6 md:space-x-8">
             <Link 
               to="/" 
@@ -120,33 +112,6 @@ const Navbar = () => {
                 Login
               </Link>
             </Button>
-          )}
-        </div>
-        
-        {/* Mobile theme toggle */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleTheme}
-          className="md:hidden fixed bottom-0 left-4 mb-20 text-foreground"
-        >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </Button>
-        
-        {/* Mobile bottom nav has login link */}
-        <div className="md:hidden fixed bottom-0 right-4 mb-20">
-          {isAuthenticated ? (
-            <Link to="/profile">
-              <Button className="rounded-full h-12 w-12 bg-aselit-purple hover:bg-aselit-purple-dark shadow-lg p-0">
-                <User size={20} />
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/auth">
-              <Button className="rounded-full h-12 w-12 bg-aselit-purple hover:bg-aselit-purple-dark shadow-lg p-0">
-                <LogIn size={20} />
-              </Button>
-            </Link>
           )}
         </div>
       </div>
