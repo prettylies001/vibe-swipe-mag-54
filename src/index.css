@@ -14,10 +14,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 346 83% 61%;
+    --primary: 267 100% 62%;
     --primary-foreground: 355 100% 100%;
 
-    --secondary: 261 100% 61%;
+    --secondary: 193 100% 45%;
     --secondary-foreground: 355 100% 100%;
 
     --accent: 173 100% 41%;
@@ -31,7 +31,7 @@
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 346 83% 61%;
+    --ring: 267 100% 62%;
 
     --radius: 0.75rem;
   }
@@ -72,4 +72,74 @@
 
 .card-shadow {
   box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+}
+
+/* Aselit brand-specific colors */
+:root {
+  --aselit-purple: #8860ff;
+  --aselit-purple-dark: #6c3eff;
+  --aselit-blue: #3eacff;
+  --aselit-blue-dark: #2990e0;
+  --aselit-gradient: linear-gradient(45deg, var(--aselit-purple), var(--aselit-blue));
+}
+
+/* Add these classes to Tailwind utilities */
+@layer utilities {
+  .bg-aselit-purple {
+    background-color: var(--aselit-purple);
+  }
+  .bg-aselit-purple-dark {
+    background-color: var(--aselit-purple-dark);
+  }
+  .bg-aselit-blue {
+    background-color: var(--aselit-blue);
+  }
+  .bg-aselit-blue-dark {
+    background-color: var(--aselit-blue-dark);
+  }
+  .bg-aselit-gradient {
+    background-image: var(--aselit-gradient);
+  }
+  .text-aselit-purple {
+    color: var(--aselit-purple);
+  }
+  .text-aselit-blue {
+    color: var(--aselit-blue);
+  }
+  .border-aselit-purple {
+    border-color: var(--aselit-purple);
+  }
+  .border-aselit-blue {
+    border-color: var(--aselit-blue);
+  }
+}
+
+/* Custom scrollbar for a better user experience */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--aselit-purple-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--aselit-purple);
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -16,6 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import CreateContentPage from "./pages/CreateContentPage";
+import HeadspacePage from "./pages/HeadspacePage";
 
 // Create the query client
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/create" element={<CreateContentPage />} />
+                <Route path="/headspace" element={<HeadspacePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

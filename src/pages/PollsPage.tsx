@@ -17,7 +17,7 @@ const PollsPage = () => {
     setShowCreatePollForm(false);
   };
   
-  const categories = ["All", "General", "Travel", "Food", "Fashion", "Technology", "Fitness", "Art", "Wellness", "Politics", "Entertainment"];
+  const categories = ["All", "General", "Travel", "Food", "Fashion", "Technology", "Fitness", "Art", "Wellness", "Politics", "Entertainment", "Headspace"];
   
   return (
     <div className="container mx-auto px-4 pt-6 pb-20 md:pt-20 md:pb-10">
@@ -35,7 +35,7 @@ const PollsPage = () => {
                   key={category}
                   className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
                     category === selectedCategory 
-                      ? "bg-vibe-red text-white" 
+                      ? "bg-aselit-purple text-white" 
                       : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                   }`}
                   onClick={() => setSelectedCategory(category)}
@@ -58,12 +58,12 @@ const PollsPage = () => {
               {showCreatePollForm ? (
                 <PollCreationForm onSuccess={handleCreatePollSuccess} />
               ) : (
-                <Card className="bg-gradient-to-r from-vibe-red/10 to-vibe-purple/10 border-none">
+                <Card className="bg-gradient-to-r from-aselit-purple/10 to-aselit-blue/10 border-none">
                   <CardContent className="p-6 flex flex-col items-center text-center">
                     <h3 className="text-xl font-bold mb-2">Create a Poll</h3>
                     <p className="text-gray-600 mb-4">Ask questions and get insights from the community</p>
                     <Button 
-                      className="bg-vibe-red hover:bg-vibe-red/90"
+                      className="bg-aselit-purple hover:bg-aselit-purple/90"
                       onClick={() => setShowCreatePollForm(true)}
                     >
                       Create a Poll
@@ -73,12 +73,12 @@ const PollsPage = () => {
               )}
             </>
           ) : (
-            <Card className="bg-gradient-to-r from-vibe-red/10 to-vibe-purple/10 border-none">
+            <Card className="bg-gradient-to-r from-aselit-purple/10 to-aselit-blue/10 border-none">
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <h3 className="text-xl font-bold mb-2">Join the conversation</h3>
                 <p className="text-gray-600 mb-4">Log in to create polls and vote</p>
                 <Button 
-                  className="bg-vibe-red hover:bg-vibe-red/90"
+                  className="bg-aselit-purple hover:bg-aselit-purple/90"
                   onClick={() => window.location.href = "/auth"}
                 >
                   Log In / Sign Up
@@ -91,7 +91,7 @@ const PollsPage = () => {
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">Popular Categories</h3>
               <div className="flex flex-wrap gap-2">
-                {["Politics", "Entertainment", "Technology", "Sports", "Food", "Travel", "Fashion", "Health"].map(tag => (
+                {["Politics", "Entertainment", "Technology", "Sports", "Food", "Travel", "Fashion", "Headspace"].map(tag => (
                   <span 
                     key={tag} 
                     className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700 hover:bg-gray-200 cursor-pointer"

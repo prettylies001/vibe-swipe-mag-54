@@ -1,7 +1,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, Upload, Plus } from "lucide-react";
 import VideoPlayer from "../components/VideoPlayer";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const videoData = [
   {
@@ -43,13 +47,26 @@ const videoData = [
     userAvatar: "https://randomuser.me/api/portraits/men/75.jpg",
     likes: 4721,
     comments: 231
+  },
+  {
+    id: "5",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-woman-meditating-in-a-yoga-position-42693-large.mp4",
+    poster: "https://images.unsplash.com/photo-1545389336-cf090694435e",
+    username: "mindfulmovement",
+    description: "Finding inner peace through daily meditation practice. #headspace #wellness #meditation",
+    userAvatar: "https://randomuser.me/api/portraits/women/23.jpg",
+    likes: 3210,
+    comments: 145
   }
 ];
 
 const VideosPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleSwipe = (direction: "up" | "down") => {
     if (direction === "up" && currentIndex < videoData.length - 1) {
@@ -57,6 +74,18 @@ const VideosPage = () => {
     } else if (direction === "down" && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
+  };
+
+  const handleUploadClick = () => {
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to upload videos");
+      navigate("/auth");
+      return;
+    }
+    
+    // For now just show a toast since we're not implementing full upload functionality
+    toast.success("Video upload feature coming soon!");
+    // setShowUploadModal(true);
   };
 
   // Set up touch event handlers for swipe
@@ -149,6 +178,16 @@ const VideosPage = () => {
           <ChevronUp size={24} />
         </button>
       )}
+      
+      {/* Upload button */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <Button 
+          onClick={handleUploadClick}
+          className="bg-aselit-purple hover:bg-aselit-purple-dark rounded-full h-14 w-14 shadow-lg"
+        >
+          <Upload className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 };

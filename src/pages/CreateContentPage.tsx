@@ -4,9 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import CreatePostForm from "../components/CreatePostForm";
 import PollCreationForm from "../components/PollCreationForm";
+import VideoUploadForm from "../components/VideoUploadForm";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import { FileText, BarChart2, Video } from "lucide-react";
 
 const CreateContentPage = () => {
   const [activeTab, setActiveTab] = useState("post");
@@ -28,9 +30,16 @@ const CreateContentPage = () => {
       <h1 className="text-3xl font-bold mb-6">Create New Content</h1>
       
       <Tabs defaultValue="post" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="post">Create Post</TabsTrigger>
-          <TabsTrigger value="poll">Create Poll</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="post" className="flex items-center">
+            <FileText className="h-4 w-4 mr-2" /> Create Post
+          </TabsTrigger>
+          <TabsTrigger value="poll" className="flex items-center">
+            <BarChart2 className="h-4 w-4 mr-2" /> Create Poll
+          </TabsTrigger>
+          <TabsTrigger value="video" className="flex items-center">
+            <Video className="h-4 w-4 mr-2" /> Upload Video
+          </TabsTrigger>
         </TabsList>
         
         <Card className="mt-6">
@@ -64,6 +73,24 @@ const CreateContentPage = () => {
                   toast.success("Poll created successfully!");
                   navigate("/polls");
                 }}
+              />
+            </CardContent>
+          </TabsContent>
+          
+          <TabsContent value="video">
+            <CardHeader>
+              <CardTitle>Upload a Video</CardTitle>
+              <CardDescription>
+                Share your moments, tutorials, or creative content with the community.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VideoUploadForm 
+                onSuccess={() => {
+                  toast.success("Video uploaded successfully!");
+                  navigate("/videos");
+                }}
+                onCancel={() => setActiveTab("post")}
               />
             </CardContent>
           </TabsContent>

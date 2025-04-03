@@ -216,6 +216,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
               <option value="Wellness">Wellness</option>
               <option value="Politics">Politics</option>
               <option value="Entertainment">Entertainment</option>
+              <option value="Headspace">Headspace</option>
             </select>
           </div>
         </CardContent>
@@ -230,7 +231,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
           }}>
             Reset
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-vibe-red hover:bg-vibe-red/90">
+          <Button type="submit" disabled={isSubmitting} className="bg-aselit-purple hover:bg-aselit-purple/90">
             {isSubmitting ? "Creating..." : "Create Poll"}
           </Button>
         </CardFooter>

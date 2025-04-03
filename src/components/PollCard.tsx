@@ -76,6 +76,22 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
     return Math.round((votes / poll.totalVotes) * 100);
   };
   
+  // Get badge color based on category
+  const getBadgeColor = (category: string) => {
+    switch(category) {
+      case "Headspace":
+        return "bg-aselit-purple/10 hover:bg-aselit-purple/20 text-aselit-purple";
+      case "Technology":
+        return "bg-blue-100 hover:bg-blue-200 text-blue-800";
+      case "Travel":
+        return "bg-green-100 hover:bg-green-200 text-green-800";
+      case "Food":
+        return "bg-orange-100 hover:bg-orange-200 text-orange-800";
+      default:
+        return "bg-gray-100 hover:bg-gray-200 text-gray-800";
+    }
+  };
+  
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300">
       <CardHeader className="flex flex-row items-start space-y-0 gap-3 pb-2">
@@ -90,7 +106,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
         </div>
         
         <div className="ml-auto">
-          <Badge variant="outline" className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+          <Badge variant="outline" className={getBadgeColor(poll.category)}>
             {poll.category}
           </Badge>
         </div>
@@ -98,7 +114,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
       
       <CardContent>
         <div className="flex items-center gap-2 mb-4">
-          <BarChart2 className="h-5 w-5 text-vibe-red" />
+          <BarChart2 className="h-5 w-5 text-aselit-purple" />
           <h3 className="text-xl font-semibold">{poll.question}</h3>
         </div>
         
@@ -108,7 +124,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
               key={option.id} 
               className={`relative border rounded-md p-3 cursor-pointer transition-all ${
                 selectedOption === option.id 
-                  ? "border-vibe-red bg-vibe-red/5" 
+                  ? "border-aselit-purple bg-aselit-purple/5" 
                   : "border-gray-200 hover:border-gray-300"
               } ${
                 userVoted 
@@ -123,7 +139,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
                     <div 
                       className={`h-4 w-4 rounded-full border ${
                         selectedOption === option.id 
-                          ? "border-vibe-red bg-vibe-red" 
+                          ? "border-aselit-purple bg-aselit-purple" 
                           : "border-gray-300"
                       }`}
                     />
@@ -140,7 +156,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
               {userVoted && (
                 <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-vibe-red" 
+                    className="h-full bg-aselit-purple" 
                     style={{ width: `${getPercentage(option.votes)}%` }}
                   />
                 </div>
@@ -158,7 +174,7 @@ const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
         
         {!userVoted ? (
           <Button 
-            className="bg-vibe-red hover:bg-vibe-red/90"
+            className="bg-aselit-purple hover:bg-aselit-purple/90"
             onClick={handleVote}
             disabled={!selectedOption || !isAuthenticated}
           >
