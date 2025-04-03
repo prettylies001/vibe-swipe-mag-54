@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Post } from "../components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Heart, MessageSquare, Share2 } from "lucide-react";
@@ -15,6 +15,7 @@ const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
   const { currentUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const embedRef = useRef<HTMLDivElement>(null);
   
   const [post, setPost] = useState<Post | null>(null);
   const [comment, setComment] = useState("");
@@ -32,6 +33,98 @@ const ArticlePage = () => {
       }
     }
   }, [id]);
+  
+  // Process embeds when component mounts
+  useEffect(() => {
+    if (post?.embedUrl && embedRef.current) {
+      processEmbed(post.embedUrl, embedRef.current);
+    }
+  }, [post]);
+  
+  // Function to process social media embed links
+  const processEmbed = (url: string, container: HTMLDivElement) => {
+    // Clear previous content
+    container.innerHTML = '';
+    
+    if (url.includes('twitter.com') || url.includes('x.com')) {
+      // Twitter/X embed
+      const twitterScript = document.createElement('script');
+      twitterScript.setAttribute('src', 'https://platform.twitter.com/widgets.js');
+      twitterScript.setAttribute('async', 'true');
+      
+      const tweetContainer = document.createElement('div');
+      tweetContainer.innerHTML = `<blockquote class="twitter-tweet"><a href="${url}">Loading tweet...</a></blockquote>`;
+      
+      container.appendChild(tweetContainer);
+      container.appendChild(twitterScript);
+    } 
+    else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      // YouTube embed
+      let videoId = '';
+      
+      if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(new URL(url).search);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+      }
+      
+      if (videoId) {
+        const iframe = document.createElement('iframe');
+        iframe.width = '100%';
+        iframe.height = '400';
+        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        iframe.frameBorder = '0';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      }
+    } 
+    else if (url.includes('instagram.com')) {
+      // Instagram embed
+      const instaScript = document.createElement('script');
+      instaScript.setAttribute('src', 'https://www.instagram.com/embed.js');
+      instaScript.setAttribute('async', 'true');
+      
+      const postId = url.split('/p/')[1]?.split('/')[0] || '';
+      if (postId) {
+        const instaContainer = document.createElement('blockquote');
+        instaContainer.className = 'instagram-media';
+        instaContainer.setAttribute('data-instgrm-permalink', `https://www.instagram.com/p/${postId}/`);
+        instaContainer.setAttribute('data-instgrm-version', '14');
+        
+        container.appendChild(instaContainer);
+        container.appendChild(instaScript);
+      }
+    }
+    else if (url.includes('facebook.com')) {
+      // Facebook embed
+      const fbScript = document.createElement('script');
+      fbScript.setAttribute('src', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0');
+      fbScript.setAttribute('async', 'true');
+      fbScript.setAttribute('defer', 'true');
+      
+      const fbContainer = document.createElement('div');
+      fbContainer.className = 'fb-post';
+      fbContainer.setAttribute('data-href', url);
+      
+      container.appendChild(fbContainer);
+      container.appendChild(fbScript);
+      
+      // Initialize Facebook SDK if not already done
+      if (!window.FB) {
+        window.fbAsyncInit = function() {
+          FB.init({
+            xfbml: true,
+            version: 'v12.0'
+          });
+          FB.XFBML.parse(container);
+        };
+      } else {
+        FB.XFBML.parse(container);
+      }
+    }
+  };
   
   const handleLike = () => {
     if (!isAuthenticated) {
@@ -150,10 +243,10 @@ const ArticlePage = () => {
   };
   
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 animate-fade-in">
       <Link 
         to="/" 
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-vibe-red mb-6"
+        className="inline-flex items-center gap-2 text-gray-600 hover:text-vibe-red mb-6 transition-colors"
       >
         <ArrowLeft size={18} />
         <span>Back to posts</span>
@@ -194,10 +287,18 @@ const ArticlePage = () => {
             <p className="whitespace-pre-line">{post.content}</p>
           </div>
           
+          {/* Social media embed */}
+          {post.embedUrl && (
+            <div 
+              ref={embedRef} 
+              className="my-8 border rounded-lg overflow-hidden animate-fade-in"
+            />
+          )}
+          
           <div className="flex gap-4 py-4 border-t border-b">
             <Button 
               variant="ghost" 
-              className="flex items-center gap-2 text-gray-600 hover:text-vibe-red"
+              className="flex items-center gap-2 text-gray-600 hover:text-vibe-red transition-colors"
               onClick={handleLike}
             >
               <Heart className="h-5 w-5" />
@@ -206,7 +307,7 @@ const ArticlePage = () => {
             
             <Button 
               variant="ghost" 
-              className="flex items-center gap-2 text-gray-600"
+              className="flex items-center gap-2 text-gray-600 transition-colors"
             >
               <MessageSquare className="h-5 w-5" />
               <span>{post.comments.length} Comments</span>
@@ -214,7 +315,7 @@ const ArticlePage = () => {
             
             <Button 
               variant="ghost" 
-              className="flex items-center gap-2 text-gray-600 ml-auto"
+              className="flex items-center gap-2 text-gray-600 ml-auto transition-colors"
             >
               <Share2 className="h-5 w-5" />
               <span>Share</span>
@@ -226,7 +327,7 @@ const ArticlePage = () => {
           <h3 className="text-xl font-bold mb-6">Comments</h3>
           
           {isAuthenticated ? (
-            <Card className="mb-8">
+            <Card className="mb-8 animate-fade-in">
               <CardContent className="pt-6">
                 <form onSubmit={handleCommentSubmit}>
                   <div className="flex items-start gap-4">
@@ -255,7 +356,7 @@ const ArticlePage = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="mb-8 bg-gray-50">
+            <Card className="mb-8 bg-gray-50 animate-fade-in">
               <CardContent className="py-6">
                 <div className="text-center">
                   <p className="mb-3">You need to be logged in to comment</p>
@@ -273,7 +374,7 @@ const ArticlePage = () => {
           {post.comments.length > 0 ? (
             <div className="space-y-6">
               {post.comments.map(comment => (
-                <div key={comment.id} className="flex gap-4">
+                <div key={comment.id} className="flex gap-4 animate-fade-in">
                   <Avatar className="mt-1">
                     <AvatarImage src={comment.authorImage} alt={comment.author} />
                     <AvatarFallback>{comment.author.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -289,7 +390,7 @@ const ArticlePage = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 text-gray-500">
+            <div className="text-center py-6 text-gray-500 animate-fade-in">
               <p>No comments yet. Be the first to comment!</p>
             </div>
           )}

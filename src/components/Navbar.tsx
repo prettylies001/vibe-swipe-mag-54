@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Home, Video, LogIn, User, PlusCircle, Bell, Moon, Sun } from "lucide-react";
+import { Home, Video, LogIn, User, PlusCircle, Brain } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ import {
 
 const Navbar = () => {
   const { currentUser, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-3 md:top-0 md:bottom-auto md:border-t-0 md:border-b dark-transition">
@@ -37,29 +36,19 @@ const Navbar = () => {
               <Video size={24} />
               <span className="text-xs md:text-sm">Videos</span>
             </Link>
+            <Link 
+              to="/headspace" 
+              className="flex flex-col items-center md:flex-row md:space-x-2 text-foreground hover:text-aselit-purple transition-colors"
+            >
+              <Brain size={24} />
+              <span className="text-xs md:text-sm">Headspace</span>
+            </Link>
           </div>
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleTheme}
-            className="text-foreground hover:text-aselit-purple hover:bg-transparent"
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
-          
           {isAuthenticated ? (
             <>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-foreground hover:text-aselit-purple hover:bg-transparent"
-              >
-                <Bell size={20} />
-              </Button>
-              
               <Button 
                 variant="ghost" 
                 size="icon" 

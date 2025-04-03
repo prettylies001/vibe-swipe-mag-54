@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
@@ -7,12 +6,14 @@ import PollCard from "../components/PollCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Moon, Sun } from "lucide-react";
 import { Poll } from "../components/PollCreationForm";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTheme } from "../contexts/ThemeContext";
 
-type ContentItem = Post | Poll & { type: 'post' | 'poll' };
+// Updated type definition
+type ContentItem = (Post & { type: 'post' }) | (Poll & { type: 'poll' });
 
 const HomePage = () => {
   const { isAuthenticated } = useAuth();
@@ -21,17 +22,18 @@ const HomePage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [combinedContent, setCombinedContent] = useState<ContentItem[]>([]);
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   
   // Load and combine content from localStorage
   useEffect(() => {
     // Load posts
     const storedPosts = localStorage.getItem("vibeswipe_posts");
-    let posts: Post[] = [];
+    let posts: ContentItem[] = [];
     
     if (storedPosts) {
       posts = JSON.parse(storedPosts).map((post: Post) => ({
         ...post,
-        type: 'post'
+        type: 'post' as const
       }));
     } else {
       // Sample posts
@@ -47,7 +49,7 @@ const HomePage = () => {
           createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
           likes: 42,
           comments: [],
-          type: 'post'
+          type: 'post' as const
         },
         {
           id: "2",
@@ -60,7 +62,7 @@ const HomePage = () => {
           createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
           likes: 29,
           comments: [],
-          type: 'post'
+          type: 'post' as const
         },
         {
           id: "3",
@@ -73,7 +75,7 @@ const HomePage = () => {
           createdAt: new Date(Date.now() - 3600000 * 5).toISOString(), // 5 hours ago
           likes: 15,
           comments: [],
-          type: 'post'
+          type: 'post' as const
         }
       ];
       
@@ -82,12 +84,12 @@ const HomePage = () => {
     
     // Load polls
     const storedPolls = localStorage.getItem("aselit_polls");
-    let polls: Poll[] = [];
+    let polls: ContentItem[] = [];
     
     if (storedPolls) {
       polls = JSON.parse(storedPolls).map((poll: Poll) => ({
         ...poll,
-        type: 'poll'
+        type: 'poll' as const
       }));
     } else {
       // Sample polls
@@ -106,7 +108,7 @@ const HomePage = () => {
           authorImage: "https://randomuser.me/api/portraits/women/65.jpg",
           category: "Headspace",
           createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
-          type: 'poll'
+          type: 'poll' as const
         },
         {
           id: "poll2",
@@ -122,7 +124,7 @@ const HomePage = () => {
           authorImage: "https://randomuser.me/api/portraits/men/32.jpg",
           category: "Headspace",
           createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
-          type: 'poll'
+          type: 'poll' as const
         }
       ];
       
@@ -145,13 +147,11 @@ const HomePage = () => {
     
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if ('type' in item && item.type === 'post') {
-        const post = item as Post & {type: 'post'};
-        return post.title.toLowerCase().includes(query) || 
-               post.content.toLowerCase().includes(query);
-      } else if ('type' in item && item.type === 'poll') {
-        const poll = item as Poll & {type: 'poll'};
-        return poll.question.toLowerCase().includes(query);
+      if (item.type === 'post') {
+        return item.title.toLowerCase().includes(query) || 
+               item.content.toLowerCase().includes(query);
+      } else if (item.type === 'poll') {
+        return item.question.toLowerCase().includes(query);
       }
     }
     
@@ -222,9 +222,21 @@ const HomePage = () => {
     <div className="container mx-auto px-4 pt-6 pb-20 md:pt-20 md:pb-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Discover</h1>
-            <p className="text-muted-foreground">Explore the latest trends and stories</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Discover</h1>
+              <p className="text-muted-foreground">Explore the latest trends and stories</p>
+            </div>
+            <div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleTheme}
+                className="text-foreground hover:text-aselit-purple hover:bg-transparent"
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </Button>
+            </div>
           </div>
           
           <div className="mb-6">
@@ -275,16 +287,16 @@ const HomePage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredContent.map(item => (
-                'type' in item && item.type === 'post' ? (
+                item.type === 'post' ? (
                   <PostCard 
                     key={item.id} 
-                    post={item as Post}
+                    post={item}
                     onLike={handleLike}
                   />
                 ) : (
                   <PollCard 
                     key={item.id} 
-                    poll={item as Poll}
+                    poll={item}
                     onVote={handleVote}
                   />
                 )

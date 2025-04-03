@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,7 @@ export interface Post {
     content: string;
     createdAt: string;
   }>;
+  embedUrl?: string;  // New property for social media embeds
 }
 
 interface PostCardProps {
@@ -32,6 +33,100 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onLike }) => {
+  const embedRef = useRef<HTMLDivElement>(null);
+  
+  // Process embeds when component mounts or when embedUrl changes
+  useEffect(() => {
+    if (post.embedUrl && embedRef.current) {
+      processEmbed(post.embedUrl, embedRef.current);
+    }
+  }, [post.embedUrl]);
+
+  // Function to process social media embed links
+  const processEmbed = (url: string, container: HTMLDivElement) => {
+    // Clear previous content
+    container.innerHTML = '';
+    
+    if (url.includes('twitter.com') || url.includes('x.com')) {
+      // Twitter/X embed
+      const twitterScript = document.createElement('script');
+      twitterScript.setAttribute('src', 'https://platform.twitter.com/widgets.js');
+      twitterScript.setAttribute('async', 'true');
+      
+      const tweetContainer = document.createElement('div');
+      tweetContainer.innerHTML = `<blockquote class="twitter-tweet"><a href="${url}">Loading tweet...</a></blockquote>`;
+      
+      container.appendChild(tweetContainer);
+      container.appendChild(twitterScript);
+    } 
+    else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      // YouTube embed
+      let videoId = '';
+      
+      if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(new URL(url).search);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+      }
+      
+      if (videoId) {
+        const iframe = document.createElement('iframe');
+        iframe.width = '100%';
+        iframe.height = '200';
+        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        iframe.frameBorder = '0';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      }
+    } 
+    else if (url.includes('instagram.com')) {
+      // Instagram embed
+      const instaScript = document.createElement('script');
+      instaScript.setAttribute('src', 'https://www.instagram.com/embed.js');
+      instaScript.setAttribute('async', 'true');
+      
+      const postId = url.split('/p/')[1]?.split('/')[0] || '';
+      if (postId) {
+        const instaContainer = document.createElement('blockquote');
+        instaContainer.className = 'instagram-media';
+        instaContainer.setAttribute('data-instgrm-permalink', `https://www.instagram.com/p/${postId}/`);
+        instaContainer.setAttribute('data-instgrm-version', '14');
+        
+        container.appendChild(instaContainer);
+        container.appendChild(instaScript);
+      }
+    }
+    else if (url.includes('facebook.com')) {
+      // Facebook embed
+      const fbScript = document.createElement('script');
+      fbScript.setAttribute('src', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0');
+      fbScript.setAttribute('async', 'true');
+      fbScript.setAttribute('defer', 'true');
+      
+      const fbContainer = document.createElement('div');
+      fbContainer.className = 'fb-post';
+      fbContainer.setAttribute('data-href', url);
+      
+      container.appendChild(fbContainer);
+      container.appendChild(fbScript);
+      
+      // Initialize Facebook SDK if not already done
+      if (!window.FB) {
+        window.fbAsyncInit = function() {
+          FB.init({
+            xfbml: true,
+            version: 'v12.0'
+          });
+          FB.XFBML.parse(container);
+        };
+      } else {
+        FB.XFBML.parse(container);
+      }
+    }
+  };
+  
   // Format date to relative time (e.g., "2 hours ago")
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -67,7 +162,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike }) => {
   };
   
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 animate-fade-in">
       {post.imageUrl && (
         <div className="relative h-48 w-full overflow-hidden">
           <img 
@@ -105,13 +200,21 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike }) => {
         <p className="text-gray-600">
           {post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content}
         </p>
+        
+        {/* Social media embed container */}
+        {post.embedUrl && (
+          <div 
+            ref={embedRef} 
+            className="mt-4 border rounded-md overflow-hidden transition-all duration-300 hover:shadow-md"
+          />
+        )}
       </CardContent>
       
       <CardFooter className="flex justify-between border-t pt-4">
         <Button 
           variant="ghost" 
           size="sm" 
-          className="flex items-center gap-1 text-gray-600 hover:text-vibe-red"
+          className="flex items-center gap-1 text-gray-600 hover:text-vibe-red transition-colors"
           onClick={() => onLike && onLike(post.id)}
         >
           <Heart className="h-4 w-4" />
@@ -121,7 +224,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike }) => {
         <Button 
           variant="ghost" 
           size="sm" 
-          className="flex items-center gap-1 text-gray-600" 
+          className="flex items-center gap-1 text-gray-600 transition-colors" 
           asChild
         >
           <Link to={`/article/${post.id}`}>
@@ -133,7 +236,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike }) => {
         <Button 
           variant="ghost" 
           size="sm" 
-          className="flex items-center gap-1 text-gray-600"
+          className="flex items-center gap-1 text-gray-600 transition-colors"
         >
           <Share2 className="h-4 w-4" />
           <span>Share</span>
