@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Home, Video, LogIn, User, PlusCircle, Bell } from "lucide-react";
+import { Home, Video, LogIn, User, PlusCircle, Bell, BarChart2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,7 +28,7 @@ const Navbar = () => {
         </div>
         
         <div className="flex justify-center flex-1 md:justify-start">
-          <div className="flex space-x-8">
+          <div className="flex space-x-6 md:space-x-8">
             <Link 
               to="/" 
               className="flex flex-col items-center md:flex-row md:space-x-2 text-vibe-dark hover:text-vibe-red transition-colors"
@@ -42,6 +42,13 @@ const Navbar = () => {
             >
               <Video size={24} />
               <span className="text-xs md:text-sm">Videos</span>
+            </Link>
+            <Link 
+              to="/polls" 
+              className="flex flex-col items-center md:flex-row md:space-x-2 text-vibe-dark hover:text-vibe-red transition-colors"
+            >
+              <BarChart2 size={24} />
+              <span className="text-xs md:text-sm">Polls</span>
             </Link>
           </div>
         </div>

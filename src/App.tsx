@@ -10,6 +10,7 @@ import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import VideosPage from "./pages/VideosPage";
 import ArticlePage from "./pages/ArticlePage";
+import PollsPage from "./pages/PollsPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -32,6 +33,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/videos" element={<VideosPage />} />
+                <Route path="/polls" element={<PollsPage />} />
                 <Route path="/article/:id" element={<ArticlePage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/profile" element={<ProfilePage />} />

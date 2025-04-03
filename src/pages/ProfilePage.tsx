@@ -1,7 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { Post } from "../components/PostCard";
 import { 
   User as UserIcon, 
   Mail, 
@@ -11,17 +12,23 @@ import {
   Video, 
   Image, 
   BarChart2,
-  ArrowLeft
+  ArrowLeft,
+  Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import PostCard from "../components/PostCard";
+import CreatePostForm from "../components/CreatePostForm";
 
 const ProfilePage: React.FC = () => {
   const { currentUser, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
@@ -35,10 +42,26 @@ const ProfilePage: React.FC = () => {
     day: 'numeric'
   }) : '';
   
+  // Fetch user's posts
+  useEffect(() => {
+    const storedPosts = localStorage.getItem("vibeswipe_posts");
+    if (storedPosts && currentUser) {
+      const allPosts = JSON.parse(storedPosts);
+      const filteredPosts = allPosts.filter((post: Post) => post.author === currentUser.username);
+      setUserPosts(filteredPosts);
+    }
+  }, [currentUser, refreshTrigger]);
+  
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
     navigate("/");
+  };
+  
+  const handleCreatePostSuccess = () => {
+    setShowCreateForm(false);
+    setRefreshTrigger(prev => prev + 1);
+    toast.success("Post created successfully!");
   };
   
   return (
@@ -114,42 +137,76 @@ const ProfilePage: React.FC = () => {
           {/* Profile content */}
           <div className="w-full md:w-2/3">
             <Tabs defaultValue="posts">
-              <TabsList className="grid grid-cols-3 mb-8">
-                <TabsTrigger value="posts" className="flex items-center gap-2">
-                  <Image className="h-4 w-4" />
-                  <span>Posts</span>
-                </TabsTrigger>
-                <TabsTrigger value="videos" className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  <span>Videos</span>
-                </TabsTrigger>
-                <TabsTrigger value="polls" className="flex items-center gap-2">
-                  <BarChart2 className="h-4 w-4" />
-                  <span>Polls</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex items-center justify-between mb-6">
+                <TabsList className="grid grid-cols-3">
+                  <TabsTrigger value="posts" className="flex items-center gap-2">
+                    <Image className="h-4 w-4" />
+                    <span>Posts</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="videos" className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    <span>Videos</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="polls" className="flex items-center gap-2">
+                    <BarChart2 className="h-4 w-4" />
+                    <span>Polls</span>
+                  </TabsTrigger>
+                </TabsList>
+                
+                <Button 
+                  onClick={() => setShowCreateForm(!showCreateForm)}
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  {showCreateForm ? (
+                    <span>Cancel</span>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      <span>Create</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {showCreateForm && (
+                <div className="mb-8">
+                  <CreatePostForm onSuccess={handleCreatePostSuccess} />
+                </div>
+              )}
               
               <TabsContent value="posts">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Posts</CardTitle>
-                    <CardDescription>
-                      Content you've shared with the community
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <Image className="h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="font-medium text-lg">No posts yet</h3>
-                      <p className="text-muted-foreground mt-2 max-w-md">
-                        You haven't created any posts yet. Share your thoughts, ideas, or stories with the community!
-                      </p>
-                      <Button className="mt-6 bg-vibe-red hover:bg-vibe-red/90">
-                        Create New Post
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                {userPosts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {userPosts.map(post => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Your Posts</CardTitle>
+                      <CardDescription>
+                        Content you've shared with the community
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Image className="h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="font-medium text-lg">No posts yet</h3>
+                        <p className="text-muted-foreground mt-2 max-w-md">
+                          You haven't created any posts yet. Share your thoughts, ideas, or stories with the community!
+                        </p>
+                        <Button 
+                          className="mt-6 bg-vibe-red hover:bg-vibe-red/90"
+                          onClick={() => setShowCreateForm(true)}
+                        >
+                          Create New Post
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
               
               <TabsContent value="videos">
