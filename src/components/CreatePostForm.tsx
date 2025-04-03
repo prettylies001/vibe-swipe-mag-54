@@ -11,7 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, LinkIcon, X } from "lucide-react";
 import { toast } from "sonner";
 
-const CreatePostForm = () => {
+interface CreatePostFormProps {
+  onSuccess?: () => void;
+}
+
+const CreatePostForm: React.FC<CreatePostFormProps> = ({ onSuccess }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -81,7 +85,12 @@ const CreatePostForm = () => {
     setEmbedUrl("");
     setIsSubmitting(false);
     
-    navigate("/");
+    // Call onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate("/");
+    }
   };
   
   const validateEmbedUrl = (url: string) => {

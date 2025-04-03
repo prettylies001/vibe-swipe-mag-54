@@ -1,103 +1,71 @@
 
-import React, { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import CreatePostForm from "../components/CreatePostForm";
-import PollCreationForm from "../components/PollCreationForm";
-import VideoUploadForm from "../components/VideoUploadForm";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import CreatePostForm from "../components/CreatePostForm";
+import VideoUploadForm from "../components/VideoUploadForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Video, Image, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
-import { FileText, BarChart2, Video } from "lucide-react";
 
-const CreateContentPage = () => {
-  const location = useLocation();
-  const initialTab = location.state?.activeTab || "post";
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const navigate = useNavigate();
+const CreateContentPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState("post");
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error("You must be logged in to create content");
-      navigate("/auth");
-    }
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated) return null;
-
+  // If user is not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" />;
+  }
+  
+  const handlePostSuccess = () => {
+    toast.success("Post created successfully!");
+    // Navigate programmatically after success
+    window.location.href = "/";
+  };
+  
   return (
-    <div className="container max-w-4xl py-8">
-      <h1 className="text-3xl font-bold mb-6">Create New Content</h1>
-      
-      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="post" className="flex items-center">
-            <FileText className="h-4 w-4 mr-2" /> Create Post
-          </TabsTrigger>
-          <TabsTrigger value="poll" className="flex items-center">
-            <BarChart2 className="h-4 w-4 mr-2" /> Create Poll
-          </TabsTrigger>
-          <TabsTrigger value="video" className="flex items-center">
-            <Video className="h-4 w-4 mr-2" /> Upload Video
-          </TabsTrigger>
-        </TabsList>
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Create Content</h1>
         
-        <Card className="mt-6 bg-card dark-transition">
-          <TabsContent value="post">
-            <CardHeader>
-              <CardTitle>Create a New Post</CardTitle>
-              <CardDescription>
-                Share your thoughts, ideas, or stories with the community.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CreatePostForm 
-                onSuccess={() => {
-                  toast.success("Post created successfully!");
-                  navigate("/");
-                }}
-              />
-            </CardContent>
-          </TabsContent>
+        <Tabs defaultValue="post" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 mb-8">
+            <TabsTrigger value="post" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              <span>Post</span>
+            </TabsTrigger>
+            <TabsTrigger value="video" className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              <span>Video</span>
+            </TabsTrigger>
+            <TabsTrigger value="poll" className="flex items-center gap-2">
+              <BarChart2 className="h-4 w-4" />
+              <span>Poll</span>
+            </TabsTrigger>
+          </TabsList>
           
-          <TabsContent value="poll">
-            <CardHeader>
-              <CardTitle>Create a New Poll</CardTitle>
-              <CardDescription>
-                Ask a question and gather opinions from the community.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PollCreationForm 
-                onSuccess={() => {
-                  toast.success("Poll created successfully!");
-                  navigate("/");
-                }}
-              />
-            </CardContent>
+          <TabsContent value="post">
+            <CreatePostForm onSuccess={handlePostSuccess} />
           </TabsContent>
           
           <TabsContent value="video">
-            <CardHeader>
-              <CardTitle>Upload a Video</CardTitle>
-              <CardDescription>
-                Share your moments, tutorials, or creative content with the community.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <VideoUploadForm 
-                onSuccess={() => {
-                  toast.success("Video uploaded successfully!");
-                  navigate("/videos");
-                }}
-                onCancel={() => setActiveTab("post")}
-              />
-            </CardContent>
+            <VideoUploadForm />
           </TabsContent>
-        </Card>
-      </Tabs>
+          
+          <TabsContent value="poll">
+            <div className="text-center py-16">
+              <BarChart2 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Poll Creation</h2>
+              <p className="text-muted-foreground mb-6">
+                Create polls to engage with the community and gather opinions.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Coming soon...
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
