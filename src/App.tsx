@@ -15,11 +15,12 @@ import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import CreateContentPage from "./pages/CreateContentPage";
 
 // Create the query client
 const queryClient = new QueryClient();
 
-// Define the App component as a function component
+// Define the App component
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/create" element={<CreateContentPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
