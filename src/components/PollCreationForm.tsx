@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, BarChart2 } from "lucide-react";
+import { Plus, Trash2, BarChart2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { createPoll } from "../lib/pollUtils";
 
 interface PollCreationFormProps {
   onSuccess?: () => void;
@@ -69,7 +70,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !currentUser) {
       toast.error("You must be logged in to create a poll");
       navigate("/auth");
       return;
@@ -89,35 +90,13 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create a new poll object
-      const newPoll: Poll = {
-        id: Math.random().toString(36).substring(2, 9),
+      await createPoll(
         question,
-        options: options.map(option => ({
-          id: option.id,
-          text: option.text,
-          votes: 0
-        })),
-        author: currentUser?.username || "Anonymous",
-        authorImage: currentUser?.avatarUrl || "https://randomuser.me/api/portraits/lego/1.jpg",
-        createdAt: new Date().toISOString(),
-        totalVotes: 0,
-        category
-      };
+        options,
+        category,
+        currentUser.id
+      );
       
-      // Get existing polls from localStorage or initialize empty array
-      const existingPolls = JSON.parse(localStorage.getItem("vibeswipe_polls") || "[]");
-      
-      // Add new poll to beginning of array
-      const updatedPolls = [newPoll, ...existingPolls];
-      
-      // Save updated polls to localStorage
-      localStorage.setItem("vibeswipe_polls", JSON.stringify(updatedPolls));
-      
-      // Show success message
       toast.success("Poll created successfully!");
       
       // Reset form
@@ -133,7 +112,6 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
         onSuccess();
       }
     } catch (error) {
-      toast.error("Failed to create poll. Please try again.");
       console.error("Error creating poll:", error);
     } finally {
       setIsSubmitting(false);
@@ -158,6 +136,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               required
+              disabled={isSubmitting}
             />
           </div>
           
@@ -171,13 +150,14 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
                     value={option.text}
                     onChange={(e) => updateOption(option.id, e.target.value)}
                     required
+                    disabled={isSubmitting}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeOption(option.id)}
-                    disabled={options.length <= 2}
+                    disabled={options.length <= 2 || isSubmitting}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -190,7 +170,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
               variant="outline"
               size="sm"
               onClick={addOption}
-              disabled={options.length >= 6}
+              disabled={options.length >= 6 || isSubmitting}
               className="mt-2"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -205,6 +185,7 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              disabled={isSubmitting}
             >
               <option value="General">General</option>
               <option value="Travel">Travel</option>
@@ -221,18 +202,34 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => {
-            setQuestion("");
-            setOptions([
-              { id: "1", text: "" },
-              { id: "2", text: "" }
-            ]);
-            setCategory("General");
-          }}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => {
+              setQuestion("");
+              setOptions([
+                { id: "1", text: "" },
+                { id: "2", text: "" }
+              ]);
+              setCategory("General");
+            }}
+            disabled={isSubmitting}
+          >
             Reset
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-aselit-purple hover:bg-aselit-purple/90">
-            {isSubmitting ? "Creating..." : "Create Poll"}
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="bg-aselit-purple hover:bg-aselit-purple/90"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Poll"
+            )}
           </Button>
         </CardFooter>
       </form>
