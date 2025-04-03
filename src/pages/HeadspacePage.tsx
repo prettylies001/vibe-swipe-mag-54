@@ -1,31 +1,15 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Sparkles, Brain, Clock, Wind, Archive } from "lucide-react";
-import PollList from "../components/PollList";
+import { Sparkles, Brain, Clock, Wind, Archive } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import BreathingExercise from "../components/headspace/BreathingExercise";
 import Pomodoro from "../components/headspace/Pomodoro";
 import WorryJar from "../components/headspace/WorryJar";
 
 const HeadspacePage = () => {
-  const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState("polls");
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const navigate = useNavigate();
-  
-  const handleCreateClick = () => {
-    if (!isAuthenticated) {
-      toast.error("You must be logged in to create content");
-      navigate("/auth");
-      return;
-    }
-    navigate("/create");
-  };
+  const [activeTab, setActiveTab] = useState("pomodoro");
 
   return (
     <div className="container mx-auto px-4 pt-6 pb-20 md:pt-20 md:pb-10">
@@ -47,12 +31,8 @@ const HeadspacePage = () => {
             <p className="mb-4">Tools to help you manage stress, improve focus, and maintain mindfulness.</p>
           </div>
           
-          <Tabs defaultValue="polls" value={activeTab} onValueChange={setActiveTab} className="mb-8 animate-fade-in">
-            <TabsList className="grid grid-cols-4 mb-6">
-              <TabsTrigger value="polls" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                <span>Polls</span>
-              </TabsTrigger>
+          <Tabs defaultValue="pomodoro" value={activeTab} onValueChange={setActiveTab} className="mb-8 animate-fade-in">
+            <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="pomodoro" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span>Pomodoro</span>
@@ -66,22 +46,6 @@ const HeadspacePage = () => {
                 <span>Worry Jar</span>
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="polls" className="animate-fade-in">
-              <div className="mb-4 flex justify-end">
-                <Button 
-                  onClick={handleCreateClick}
-                  className="bg-aselit-purple hover:bg-aselit-purple/90 flex items-center"
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Poll
-                </Button>
-              </div>
-              
-              <PollList 
-                category="Headspace" 
-                refreshTrigger={refreshTrigger} 
-              />
-            </TabsContent>
             
             <TabsContent value="pomodoro" className="animate-fade-in">
               <Pomodoro />
@@ -146,12 +110,6 @@ const HeadspacePage = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 What are you grateful for today? Studies show expressing gratitude improves mental well-being.
               </p>
-              <Button 
-                className="w-full bg-aselit-purple hover:bg-aselit-purple/90"
-                onClick={() => toast.success("Gratitude journaling is a powerful practice for mental health")}
-              >
-                Open Gratitude Journal
-              </Button>
             </CardContent>
           </Card>
         </div>
