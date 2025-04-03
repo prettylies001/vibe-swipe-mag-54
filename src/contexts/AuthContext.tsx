@@ -1,158 +1,148 @@
 
-import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase, transformUserData, DbUser } from "../lib/supabase";
-import { toast } from "sonner";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  currentUser: DbUser | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
+// Define user type
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  avatarUrl?: string;
+  isAdmin: boolean;
+  createdAt: string;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  currentUser: null,
-  login: async () => {},
-  register: async () => {},
-  logout: async () => {},
-  loading: true,
-});
+// Define auth context type
+interface AuthContextType {
+  currentUser: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, username: string, password: string) => Promise<void>;
+  logout: () => void;
+}
 
-export const useAuth = () => useContext(AuthContext);
+// Create auth context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<DbUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+// Mock user data for demonstration
+const MOCK_USERS = [
+  {
+    id: "1",
+    email: "admin@vibeswipe.com",
+    username: "admin",
+    avatarUrl: "https://i.pravatar.cc/150?u=admin",
+    password: "password123",
+    isAdmin: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    email: "user@example.com",
+    username: "regularuser",
+    avatarUrl: "https://i.pravatar.cc/150?u=user",
+    password: "password123",
+    isAdmin: false,
+    createdAt: new Date().toISOString(),
+  },
+];
 
-  // Check for session on initial load
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Check if user is already logged in (from localStorage)
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        setLoading(true);
-        
-        // Get current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Error checking session:', sessionError);
-          return;
-        }
-        
-        if (session) {
-          handleSessionChange(session);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setLoading(false);
+    const checkLoggedIn = () => {
+      const userData = localStorage.getItem("vibeswipe_user");
+      if (userData) {
+        setCurrentUser(JSON.parse(userData));
       }
+      setIsLoading(false);
     };
-
-    checkSession();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          handleSessionChange(session);
-        } else {
-          setCurrentUser(null);
-          setIsAuthenticated(false);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    
+    checkLoggedIn();
   }, []);
 
-  const handleSessionChange = async (session: Session) => {
-    if (session.user) {
-      const userData = transformUserData(session.user);
-      setCurrentUser(userData);
-      setIsAuthenticated(true);
-    }
-  };
-
+  // Login function
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Logged in successfully!");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to login");
-      throw error;
-    } finally {
-      setLoading(false);
+    setIsLoading(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Find user by email
+    const user = MOCK_USERS.find(u => u.email === email && u.password === password);
+    
+    if (!user) {
+      setIsLoading(false);
+      throw new Error("Invalid email or password");
     }
+    
+    // Remove password before storing
+    const { password: _, ...userWithoutPassword } = user;
+    
+    // Store user in localStorage
+    localStorage.setItem("vibeswipe_user", JSON.stringify(userWithoutPassword));
+    setCurrentUser(userWithoutPassword);
+    setIsLoading(false);
   };
 
-  const register = async (email: string, password: string, username: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-            avatar_url: `https://randomuser.me/api/portraits/lego/${Math.floor(Math.random() * 8) + 1}.jpg`,
-          },
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Registration successful! Please check your email for verification.");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to register");
-      throw error;
-    } finally {
-      setLoading(false);
+  // Register function
+  const register = async (email: string, username: string, password: string) => {
+    setIsLoading(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Check if email already exists
+    if (MOCK_USERS.some(u => u.email === email)) {
+      setIsLoading(false);
+      throw new Error("Email already in use");
     }
+    
+    // Create new user
+    const newUser = {
+      id: Math.random().toString(36).substring(2, 9),
+      email,
+      username,
+      avatarUrl: `https://i.pravatar.cc/150?u=${username}`,
+      isAdmin: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Store user in localStorage
+    localStorage.setItem("vibeswipe_user", JSON.stringify(newUser));
+    setCurrentUser(newUser);
+    setIsLoading(false);
   };
 
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
-      
-      setCurrentUser(null);
-      setIsAuthenticated(false);
-      toast.success("Logged out successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to logout");
-    }
+  // Logout function
+  const logout = () => {
+    localStorage.removeItem("vibeswipe_user");
+    setCurrentUser(null);
   };
 
-  const value = {
-    currentUser,
-    isAuthenticated,
-    login,
-    register,
-    logout,
-    loading,
-  };
+  const isAuthenticated = !!currentUser;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ 
+      currentUser, 
+      isLoading, 
+      isAuthenticated,
+      login, 
+      register, 
+      logout 
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Custom hook to use auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImagePlus, LinkIcon, X, Loader2 } from "lucide-react";
+import { ImagePlus, LinkIcon, X } from "lucide-react";
 import { toast } from "sonner";
-import { createPost } from "../lib/postUtils";
 
 interface CreatePostFormProps {
   onSuccess?: () => void;
@@ -27,7 +26,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onSuccess }) => {
   const [embedUrl, setEmbedUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) {
@@ -45,47 +44,57 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onSuccess }) => {
       return;
     }
     
-    if (!currentUser) {
-      toast.error("You must be logged in to create a post");
-      return;
-    }
-    
     setIsSubmitting(true);
     
-    try {
-      await createPost(
-        title,
-        content,
-        category,
-        currentUser.id,
-        imageUrl || undefined,
-        validateEmbedUrl(embedUrl) ? embedUrl : undefined
-      );
-      
-      toast.success("Post created successfully!");
-      
-      // Reset form and navigate to home page
-      setTitle("");
-      setContent("");
-      setCategory("");
-      setImageUrl("");
-      setEmbedUrl("");
-      
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate("/");
-      }
-    } catch (error) {
-      console.error("Error creating post:", error);
-    } finally {
-      setIsSubmitting(false);
+    // Create post object
+    const post = {
+      id: Math.random().toString(36).substring(2, 9),
+      title,
+      content,
+      category,
+      imageUrl: imageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop",
+      author: currentUser?.username || "Anonymous",
+      authorImage: currentUser?.avatarUrl || "https://randomuser.me/api/portraits/lego/1.jpg",
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      comments: [],
+      embedUrl: embedUrl || undefined // Add embedUrl if provided
+    };
+    
+    // Get existing posts from localStorage
+    const existingPosts = localStorage.getItem("vibeswipe_posts");
+    let posts = [];
+    
+    if (existingPosts) {
+      posts = JSON.parse(existingPosts);
+    }
+    
+    // Add new post to the beginning of the array
+    posts.unshift(post);
+    
+    // Save to localStorage
+    localStorage.setItem("vibeswipe_posts", JSON.stringify(posts));
+    
+    toast.success("Post created successfully!");
+    
+    // Reset form and navigate to home page
+    setTitle("");
+    setContent("");
+    setCategory("");
+    setImageUrl("");
+    setEmbedUrl("");
+    setIsSubmitting(false);
+    
+    // Call onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate("/");
     }
   };
   
   const validateEmbedUrl = (url: string) => {
-    if (!url) return false;
+    if (!url) return true;
     
     // Check if URL is valid
     try {
@@ -215,14 +224,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onSuccess }) => {
             className="w-full bg-vibe-red hover:bg-vibe-red/90"
             disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
-                Creating Post...
-              </>
-            ) : (
-              "Create Post"
-            )}
+            {isSubmitting ? "Creating Post..." : "Create Post"}
           </Button>
         </form>
       </CardContent>

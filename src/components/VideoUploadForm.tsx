@@ -1,295 +1,217 @@
 
 import React, { useState, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Video, Image, Upload, Loader2, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload, X, Film } from "lucide-react";
 import { toast } from "sonner";
-import { uploadVideo } from "../lib/videoUtils";
+import { useAuth } from "../contexts/AuthContext";
 
 interface VideoUploadFormProps {
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-const VideoUploadForm: React.FC<VideoUploadFormProps> = ({ onSuccess }) => {
+const VideoUploadForm: React.FC<VideoUploadFormProps> = ({ onSuccess, onCancel }) => {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
-  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState("");
-  const [posterPreview, setPosterPreview] = useState("");
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const posterInputRef = useRef<HTMLInputElement>(null);
-  
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check if file is a video
-      if (!file.type.startsWith('video/')) {
-        toast.error("Please select a valid video file");
-        return;
-      }
-      
-      // Check file size (limit to 100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        toast.error("Video file size should be less than 100MB");
-        return;
-      }
-      
-      setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
-    }
-  };
-  
-  const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        toast.error("Please select a valid image file");
-        return;
-      }
-      
-      setPosterFile(file);
-      setPosterPreview(URL.createObjectURL(file));
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!currentUser) {
-      toast.error("You must be logged in to upload videos");
-      navigate('/auth');
+    if (!file) return;
+
+    // Check if file is a video
+    if (!file.type.startsWith("video/")) {
+      toast.error("Please select a video file");
       return;
     }
+
+    // Check file size (limit to 100MB for example)
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("File is too large. Please select a file under 100MB.");
+      return;
+    }
+
+    setVideoFile(file);
     
+    // Create a preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setVideoPreview(previewUrl);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!videoFile) {
       toast.error("Please select a video to upload");
       return;
     }
-    
+
     if (!title.trim()) {
-      toast.error("Please enter a title");
+      toast.error("Please enter a title for your video");
       return;
     }
-    
+
     setIsUploading(true);
-    
+
+    // Simulate upload progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 500);
+
     try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const newProgress = prev + Math.random() * 10;
-          return newProgress > 90 ? 90 : newProgress;
-        });
-      }, 500);
-      
-      await uploadVideo(
-        videoFile,
-        title,
-        description,
-        currentUser.id,
-        posterFile || undefined
-      );
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
+      // Simulate API call with delay
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
       toast.success("Video uploaded successfully!");
       
       // Reset form
       setTitle("");
       setDescription("");
       setVideoFile(null);
-      setPosterFile(null);
-      setVideoPreview("");
-      setPosterPreview("");
-      
-      // Navigate or call success callback
+      setVideoPreview(null);
+      setTags("");
+      setUploadProgress(0);
+
       if (onSuccess) {
         onSuccess();
-      } else {
-        navigate('/videos');
       }
     } catch (error) {
-      console.error("Error uploading video:", error);
       toast.error("Failed to upload video. Please try again.");
+      console.error("Error uploading video:", error);
     } finally {
+      clearInterval(progressInterval);
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
-  
+
   return (
-    <Card>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Video Upload */}
-          <div className="space-y-2">
-            <Label>Video</Label>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Film className="h-5 w-5" />
+          Upload Video
+        </CardTitle>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {!videoPreview ? (
             <div 
-              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => videoInputRef.current?.click()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-aselit-purple transition-colors"
+              onClick={() => fileInputRef.current?.click()}
             >
-              {videoPreview ? (
-                <div className="aspect-video relative">
-                  <video 
-                    src={videoPreview} 
-                    className="h-full w-full object-contain" 
-                    controls
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2 opacity-80 hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setVideoFile(null);
-                      setVideoPreview("");
-                      if (videoInputRef.current) videoInputRef.current.value = '';
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <div className="py-10 flex flex-col items-center justify-center">
-                  <Video className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-1">Click to upload a video</p>
-                  <p className="text-xs text-muted-foreground">MP4, WebM, or MOV (Max 100MB)</p>
-                </div>
-              )}
-              <input 
-                ref={videoInputRef}
+              <input
                 type="file"
-                className="hidden"
                 accept="video/*"
-                onChange={handleVideoChange}
-                disabled={isUploading}
-              />
-            </div>
-          </div>
-          
-          {/* Poster Image (Thumbnail) */}
-          <div className="space-y-2">
-            <Label>Thumbnail Image (Optional)</Label>
-            <div 
-              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => posterInputRef.current?.click()}
-            >
-              {posterPreview ? (
-                <div className="aspect-video relative">
-                  <img 
-                    src={posterPreview} 
-                    alt="Video thumbnail" 
-                    className="h-full w-full object-contain" 
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2 opacity-80 hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPosterFile(null);
-                      setPosterPreview("");
-                      if (posterInputRef.current) posterInputRef.current.value = '';
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <div className="py-8 flex flex-col items-center justify-center">
-                  <Image className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">Upload a thumbnail image</p>
-                </div>
-              )}
-              <input 
-                ref={posterInputRef}
-                type="file"
                 className="hidden"
-                accept="image/*"
-                onChange={handlePosterChange}
-                disabled={isUploading}
+                ref={fileInputRef}
+                onChange={handleFileChange}
               />
+              <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-1">Drag and drop your video or click to browse</p>
+              <p className="text-sm text-gray-500">MP4, WebM, or OGG (Max 100MB)</p>
             </div>
-          </div>
-          
-          {/* Video Details */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter video title"
-                disabled={isUploading}
-                required
+          ) : (
+            <div className="relative rounded-lg overflow-hidden bg-black">
+              <video 
+                src={videoPreview} 
+                className="w-full h-48 object-contain"
+                controls
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your video..."
-                className="min-h-20"
-                disabled={isUploading}
-              />
-            </div>
-          </div>
-          
-          {/* Upload Progress */}
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Uploading...</span>
-                <span>{Math.round(uploadProgress)}%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-vibe-red h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
+              <button
+                type="button"
+                className="absolute top-2 right-2 bg-black bg-opacity-60 rounded-full p-1 text-white"
+                onClick={() => {
+                  setVideoFile(null);
+                  setVideoPreview(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
-          
-          <Button
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Add a title that describes your video"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell viewers about your video"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags (comma separated)</Label>
+            <Input
+              id="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="e.g. travel, food, headspace"
+            />
+          </div>
+
+          {isUploading && (
+            <div className="space-y-2">
+              <Label>Upload Progress</Label>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-aselit-purple h-2.5 rounded-full" 
+                  style={{ width: `${uploadProgress}%` }} 
+                />
+              </div>
+              <p className="text-sm text-gray-500 text-right">{uploadProgress}%</p>
+            </div>
+          )}
+        </CardContent>
+        
+        <CardFooter className="flex justify-between">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            disabled={isUploading}
+          >
+            Cancel
+          </Button>
+          <Button 
             type="submit"
-            className="w-full bg-vibe-red hover:bg-vibe-red/90"
+            className="bg-aselit-purple hover:bg-aselit-purple/90"
             disabled={isUploading || !videoFile}
           >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Video
-              </>
-            )}
+            {isUploading ? "Uploading..." : "Upload Video"}
           </Button>
-        </form>
-      </CardContent>
+        </CardFooter>
+      </form>
     </Card>
   );
 };

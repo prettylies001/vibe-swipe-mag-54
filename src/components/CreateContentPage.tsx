@@ -4,30 +4,19 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
 import VideoUploadForm from "../components/VideoUploadForm";
-import PollCreationForm from "../components/PollCreationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Image, BarChart2 } from "lucide-react";
+import { Video, Image } from "lucide-react";
 import { toast } from "sonner";
 
 const CreateContentPage = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const defaultTab = location.state?.activeTab || "post";
   const [activeTab, setActiveTab] = useState(defaultTab);
 
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4 flex justify-center">
-        <div className="animate-pulse text-xl">Loading...</div>
-      </div>
-    );
-  }
-
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
-    toast.error("You must be logged in to create content");
     return <Navigate to="/auth" />;
   }
   
@@ -43,19 +32,13 @@ const CreateContentPage = () => {
     navigate("/videos");
   };
   
-  const handlePollSuccess = () => {
-    toast.success("Poll created successfully!");
-    // Navigate programmatically after success
-    navigate("/polls");
-  };
-  
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Create Content</h1>
         
         <Tabs defaultValue={defaultTab} value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 mb-8">
+          <TabsList className="grid grid-cols-2 mb-8">
             <TabsTrigger value="post" className="flex items-center gap-2">
               <Image className="h-4 w-4" />
               <span>Post</span>
@@ -63,10 +46,6 @@ const CreateContentPage = () => {
             <TabsTrigger value="video" className="flex items-center gap-2">
               <Video className="h-4 w-4" />
               <span>Video</span>
-            </TabsTrigger>
-            <TabsTrigger value="poll" className="flex items-center gap-2">
-              <BarChart2 className="h-4 w-4" />
-              <span>Poll</span>
             </TabsTrigger>
           </TabsList>
           
@@ -76,10 +55,6 @@ const CreateContentPage = () => {
           
           <TabsContent value="video">
             <VideoUploadForm onSuccess={handleVideoSuccess} />
-          </TabsContent>
-          
-          <TabsContent value="poll">
-            <PollCreationForm onSuccess={handlePollSuccess} />
           </TabsContent>
         </Tabs>
       </div>
