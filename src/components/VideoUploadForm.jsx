@@ -70,18 +70,21 @@ const VideoUploadForm = ({ onSuccess, onCancel }) => {
         }
         return newProgress;
       });
-    }, 500);
+    }, 300);
 
     try {
-      // In a real app, we would upload the video to a server
-      // For now, we'll create a URL and save to localStorage
-      const videoUrl = videoPreview;
+      // Get existing videos from localStorage
+      const existingVideos = localStorage.getItem("vibeswipe_videos");
+      let videos = [];
+      if (existingVideos) {
+        videos = JSON.parse(existingVideos);
+      }
       
       // Create video object
       const newVideo = {
         id: `video-${Date.now()}`,
-        src: videoUrl,
-        poster: videoPreview,
+        src: videoPreview, // Use the URL created by URL.createObjectURL
+        poster: videoPreview, // Use the same URL for poster
         username: currentUser?.username || "Anonymous",
         description: description || title,
         userAvatar: currentUser?.avatarUrl || "https://randomuser.me/api/portraits/lego/1.jpg",
@@ -90,18 +93,15 @@ const VideoUploadForm = ({ onSuccess, onCancel }) => {
         tags: tags.split(',').map(tag => tag.trim())
       };
       
-      // Get existing videos from localStorage
-      const existingVideos = localStorage.getItem("vibeswipe_videos");
-      let videos = [];
-      if (existingVideos) {
-        videos = JSON.parse(existingVideos);
-      }
-      
-      // Add new video
+      // Add new video at the beginning of the array
       videos.unshift(newVideo);
       
       // Save to localStorage
       localStorage.setItem("vibeswipe_videos", JSON.stringify(videos));
+      console.log("Saved video to localStorage:", newVideo);
+
+      // Wait a little to complete the "upload" simulation
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast.success("Video uploaded successfully!");
       
@@ -119,8 +119,8 @@ const VideoUploadForm = ({ onSuccess, onCancel }) => {
         navigate("/videos");
       }
     } catch (error) {
-      toast.error("Failed to upload video. Please try again.");
       console.error("Error uploading video:", error);
+      toast.error("Failed to upload video. Please try again.");
     } finally {
       clearInterval(progressInterval);
       setIsUploading(false);

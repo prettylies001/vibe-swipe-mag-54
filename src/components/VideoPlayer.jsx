@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Heart, MessageCircle, Share2, VolumeX, Volume2, Pause, Play, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Share2, VolumeX, Volume2, Play, Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -15,7 +15,7 @@ const VideoPlayer = ({
 }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(likes);
+  const [likeCount, setLikeCount] = useState(likes || 0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -117,17 +117,18 @@ const VideoPlayer = ({
     
     // Add event listeners for progress and ended
     videoElement.addEventListener('timeupdate', updateProgress);
-    videoElement.addEventListener('ended', () => {
+    
+    const handleVideoEnd = () => {
       videoElement.currentTime = 0;
       videoElement.play().catch(err => console.log("Replay prevented:", err));
-    });
+    };
+    
+    videoElement.addEventListener('ended', handleVideoEnd);
 
     return () => {
-      if (videoElement) {
-        observer.unobserve(videoElement);
-        videoElement.removeEventListener('timeupdate', updateProgress);
-        videoElement.removeEventListener('ended', null);
-      }
+      observer.unobserve(videoElement);
+      videoElement.removeEventListener('timeupdate', updateProgress);
+      videoElement.removeEventListener('ended', handleVideoEnd);
     };
   }, []);
 
@@ -138,7 +139,7 @@ const VideoPlayer = ({
         className="full-screen-video object-contain w-full h-full bg-black"
         loop
         playsInline
-        poster={poster}
+        poster={poster || ''}
         onClick={togglePlay}
         onDoubleClick={handleDoubleTap}
       >
@@ -182,7 +183,7 @@ const VideoPlayer = ({
           <div className="w-12 h-12 rounded-full glass-morphism flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
             <MessageCircle size={24} />
           </div>
-          <span className="text-white text-xs mt-1 font-medium">{comments}</span>
+          <span className="text-white text-xs mt-1 font-medium">{comments || 0}</span>
         </button>
         
         <button 
@@ -216,7 +217,7 @@ const VideoPlayer = ({
       <div className="absolute bottom-16 left-4 max-w-[70%] glass-morphism p-3 rounded-lg">
         <div className="flex items-center mb-2">
           <img 
-            src={userAvatar}
+            src={userAvatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
             alt={username}
             className="w-10 h-10 rounded-full border-2 border-white"
           />
@@ -265,7 +266,7 @@ const VideoPlayer = ({
             transform: translate(-50%, -50%) scale(1.5);
           }
         }
-      `}
+        `}
       </style>
     </div>
   );

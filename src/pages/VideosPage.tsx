@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Upload, Plus } from "lucide-react";
 import VideoPlayer from "../components/VideoPlayer";
 import { Button } from "@/components/ui/button";
@@ -7,31 +7,42 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Video data structure
 const VideosPage = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [videoData, setVideoData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef(null);
   const videoRefs = useRef([]);
   const observer = useRef(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Load videos from localStorage on mount
+  // Load videos from localStorage on mount and whenever the component rerenders
   useEffect(() => {
     const storedVideos = localStorage.getItem("vibeswipe_videos");
     if (storedVideos) {
-      setVideoData(JSON.parse(storedVideos));
+      try {
+        const parsedVideos = JSON.parse(storedVideos);
+        console.log("Loaded videos from localStorage:", parsedVideos);
+        setVideoData(parsedVideos);
+      } catch (error) {
+        console.error("Error parsing videos from localStorage:", error);
+        setVideoData([]);
+      }
+    } else {
+      console.log("No videos found in localStorage");
+      setVideoData([]);
     }
+    setIsLoading(false);
   }, []);
 
-  const handleSwipe = (direction) => {
-    if (direction === "up" && currentIndex < videoData.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else if (direction === "down" && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  const handleUploadClick = () => {
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to upload videos");
+      navigate("/auth");
+      return;
     }
+    
+    navigate("/create", { state: { activeTab: "video" } });
   };
 
   // Setup intersection observer for infinite scroll
@@ -44,7 +55,8 @@ const VideosPage = () => {
           if (entry.isIntersecting) {
             const videoIndex = videoRefs.current.findIndex(ref => ref === entry.target);
             if (videoIndex !== -1) {
-              setCurrentIndex(videoIndex);
+              // Do something with the visible video index if needed
+              console.log("Video visible:", videoIndex);
             }
           }
         });
@@ -69,56 +81,14 @@ const VideosPage = () => {
     };
   }, [videoData.length]);
 
-  const handleUploadClick = () => {
-    if (!isAuthenticated) {
-      toast.error("You must be logged in to upload videos");
-      navigate("/auth");
-      return;
-    }
-    
-    navigate("/create", { state: { activeTab: "video" } });
-  };
-
-  // Set up touch event handlers for swipe
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let touchStartY = 0;
-    let touchEndY = 0;
-    
-    const handleTouchStart = (e) => {
-      touchStartY = e.touches[0].clientY;
-    };
-    
-    const handleTouchMove = (e) => {
-      touchEndY = e.touches[0].clientY;
-    };
-    
-    const handleTouchEnd = () => {
-      const difference = touchStartY - touchEndY;
-      // If difference is significant enough (50px), consider it a swipe
-      if (Math.abs(difference) > 50) {
-        if (difference > 0) {
-          // Swiped up
-          handleSwipe("up");
-        } else {
-          // Swiped down
-          handleSwipe("down");
-        }
-      }
-    };
-    
-    container.addEventListener("touchstart", handleTouchStart);
-    container.addEventListener("touchmove", handleTouchMove);
-    container.addEventListener("touchend", handleTouchEnd);
-    
-    return () => {
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchmove", handleTouchMove);
-      container.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [currentIndex]);
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-64px)] bg-black">
+        <div className="animate-pulse text-white">Loading videos...</div>
+      </div>
+    );
+  }
 
   // Empty state when no videos are available
   if (videoData.length === 0) {

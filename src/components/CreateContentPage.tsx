@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
 import VideoUploadForm from "../components/VideoUploadForm";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const CreateContentPage = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const defaultTab = location.state?.activeTab || "post";
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -22,13 +23,13 @@ const CreateContentPage = () => {
   const handlePostSuccess = () => {
     toast.success("Post created successfully!");
     // Navigate programmatically after success
-    window.location.href = "/";
+    navigate("/");
   };
 
   const handleVideoSuccess = () => {
     toast.success("Video uploaded successfully!");
     // Navigate programmatically after success
-    window.location.href = "/videos";
+    navigate("/videos");
   };
   
   return (
