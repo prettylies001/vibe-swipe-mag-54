@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronUp, Upload, Plus } from "lucide-react";
 import VideoPlayer from "../components/VideoPlayer";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-const videoData = [
+// Starting video data 
+const initialVideoData = [
   {
     id: "1",
     src: "https://assets.mixkit.co/videos/preview/mixkit-woman-running-through-the-streets-of-a-city-34892-large.mp4",
@@ -60,11 +61,67 @@ const videoData = [
   }
 ];
 
+// Additional video sources for infinite scroll
+const additionalVideos = [
+  {
+    id: "6",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-urban-lifestyle-city-traffic-at-night-10767-large.mp4",
+    poster: "https://images.unsplash.com/photo-1534445967719-8ae7b972b1a6",
+    username: "urbanvibes",
+    description: "City lights and night vibes. The energy never stops! #citylife #nightphotography",
+    userAvatar: "https://randomuser.me/api/portraits/men/52.jpg",
+    likes: 2789,
+    comments: 123
+  },
+  {
+    id: "7",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-top-aerial-shot-of-seashore-with-rocks-1090-large.mp4",
+    poster: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0",
+    username: "travelbug",
+    description: "Ocean views that take your breath away. Nature's masterpiece. #travel #ocean #meditation",
+    userAvatar: "https://randomuser.me/api/portraits/women/89.jpg",
+    likes: 4532,
+    comments: 201
+  },
+  {
+    id: "8",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-watch-with-the-stopwatch-running-32808-large.mp4",
+    poster: "https://images.unsplash.com/photo-1541351991055-b55c0fb72004",
+    username: "techenthusiast",
+    description: "Tracking my fitness goals with the latest tech. Every second counts! #technology #fitness #headspace",
+    userAvatar: "https://randomuser.me/api/portraits/men/4.jpg",
+    likes: 1876,
+    comments: 98
+  },
+  {
+    id: "9",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-at-the-living-room-14085-large.mp4",
+    poster: "https://images.unsplash.com/photo-1599447292180-45fd84092ef0",
+    username: "yogalife",
+    description: "Home yoga practice for stress relief. Find your center wherever you are. #yoga #mindfulness #headspace",
+    userAvatar: "https://randomuser.me/api/portraits/women/55.jpg",
+    likes: 3421,
+    comments: 187
+  },
+  {
+    id: "10",
+    src: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4",
+    poster: "https://images.unsplash.com/photo-1517411018799-c6b5cbfbcd7f",
+    username: "dronepilot",
+    description: "Aerial nightscapes show the city in a different light. The pulse of urban life from above. #drone #cityscape",
+    userAvatar: "https://randomuser.me/api/portraits/men/42.jpg",
+    likes: 5210,
+    comments: 265
+  }
+];
+
 const VideosPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [videoData, setVideoData] = useState(initialVideoData);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const observer = useRef<IntersectionObserver | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -76,6 +133,55 @@ const VideosPage = () => {
     }
   };
 
+  const loadMoreVideos = useCallback(() => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      // Shuffle and select random videos from additional videos
+      const shuffled = [...additionalVideos].sort(() => 0.5 - Math.random());
+      const newVideos = shuffled.slice(0, 3).map((video, index) => ({
+        ...video,
+        id: `new-${Date.now()}-${index}`, // Ensure unique ID
+        likes: Math.floor(Math.random() * 5000),
+        comments: Math.floor(Math.random() * 300)
+      }));
+      
+      setVideoData(prevVideos => [...prevVideos, ...newVideos]);
+      setIsLoading(false);
+    }, 1500);
+  }, [isLoading]);
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        const lastEntry = entries[0];
+        if (lastEntry.isIntersecting && videoData.length - currentIndex < 3) {
+          loadMoreVideos();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    const containerElement = containerRef.current;
+    const lastVideoElement = videoRefs.current[videoData.length - 1];
+    
+    if (lastVideoElement) {
+      observer.current.observe(lastVideoElement);
+    }
+    
+    return () => {
+      if (observer.current && lastVideoElement) {
+        observer.current.unobserve(lastVideoElement);
+      }
+    };
+  }, [videoData.length, currentIndex, loadMoreVideos]);
+
   const handleUploadClick = () => {
     if (!isAuthenticated) {
       toast.error("You must be logged in to upload videos");
@@ -83,9 +189,7 @@ const VideosPage = () => {
       return;
     }
     
-    // For now just show a toast since we're not implementing full upload functionality
-    toast.success("Video upload feature coming soon!");
-    // setShowUploadModal(true);
+    navigate("/create", { state: { activeTab: "video" } });
   };
 
   // Set up touch event handlers for swipe
@@ -179,13 +283,20 @@ const VideosPage = () => {
         </button>
       )}
       
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="flex justify-center items-center h-20 w-full bg-black bg-opacity-75 text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-aselit-purple"></div>
+        </div>
+      )}
+      
       {/* Upload button */}
-      <div className="fixed bottom-6 right-6 z-20">
+      <div className="fixed bottom-20 right-6 z-20">
         <Button 
           onClick={handleUploadClick}
           className="bg-aselit-purple hover:bg-aselit-purple-dark rounded-full h-14 w-14 shadow-lg"
         >
-          <Upload className="h-6 w-6" />
+          <Plus className="h-6 w-6" />
         </Button>
       </div>
     </div>

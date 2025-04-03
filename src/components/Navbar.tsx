@@ -1,7 +1,8 @@
 
 import { Link } from "react-router-dom";
-import { Home, Video, LogIn, User, PlusCircle, Bell, BarChart2 } from "lucide-react";
+import { Home, Video, LogIn, User, PlusCircle, Bell, Moon, Sun } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,14 +16,15 @@ import {
 
 const Navbar = () => {
   const { currentUser, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 p-3 md:top-0 md:bottom-auto md:border-t-0 md:border-b">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-3 md:top-0 md:bottom-auto md:border-t-0 md:border-b dark-transition">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center md:mr-6">
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold bg-gradient-to-r from-vibe-red to-vibe-purple bg-clip-text text-transparent">
-              VibeSwipe
+            <span className="text-xl font-bold bg-gradient-to-r from-aselit-purple to-aselit-blue bg-clip-text text-transparent">
+              Aselit
             </span>
           </Link>
         </div>
@@ -31,35 +33,37 @@ const Navbar = () => {
           <div className="flex space-x-6 md:space-x-8">
             <Link 
               to="/" 
-              className="flex flex-col items-center md:flex-row md:space-x-2 text-vibe-dark hover:text-vibe-red transition-colors"
+              className="flex flex-col items-center md:flex-row md:space-x-2 text-foreground hover:text-aselit-purple transition-colors"
             >
               <Home size={24} />
               <span className="text-xs md:text-sm">Discover</span>
             </Link>
             <Link 
               to="/videos" 
-              className="flex flex-col items-center md:flex-row md:space-x-2 text-vibe-dark hover:text-vibe-red transition-colors"
+              className="flex flex-col items-center md:flex-row md:space-x-2 text-foreground hover:text-aselit-purple transition-colors"
             >
               <Video size={24} />
               <span className="text-xs md:text-sm">Videos</span>
-            </Link>
-            <Link 
-              to="/polls" 
-              className="flex flex-col items-center md:flex-row md:space-x-2 text-vibe-dark hover:text-vibe-red transition-colors"
-            >
-              <BarChart2 size={24} />
-              <span className="text-xs md:text-sm">Polls</span>
             </Link>
           </div>
         </div>
         
         <div className="hidden md:flex items-center space-x-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleTheme}
+            className="text-foreground hover:text-aselit-purple hover:bg-transparent"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </Button>
+          
           {isAuthenticated ? (
             <>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-vibe-dark hover:text-vibe-red hover:bg-transparent"
+                className="text-foreground hover:text-aselit-purple hover:bg-transparent"
               >
                 <Bell size={20} />
               </Button>
@@ -67,7 +71,7 @@ const Navbar = () => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-vibe-dark hover:text-vibe-red hover:bg-transparent"
+                className="text-foreground hover:text-aselit-purple hover:bg-transparent"
                 asChild
               >
                 <Link to="/create">
@@ -110,7 +114,7 @@ const Navbar = () => {
               </DropdownMenu>
             </>
           ) : (
-            <Button className="bg-vibe-red hover:bg-opacity-90 transition-colors" asChild>
+            <Button className="bg-aselit-purple hover:bg-aselit-purple-dark transition-colors" asChild>
               <Link to="/auth">
                 <LogIn className="mr-2 h-4 w-4" />
                 Login
@@ -119,17 +123,27 @@ const Navbar = () => {
           )}
         </div>
         
+        {/* Mobile theme toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleTheme}
+          className="md:hidden fixed bottom-0 left-4 mb-20 text-foreground"
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </Button>
+        
         {/* Mobile bottom nav has login link */}
         <div className="md:hidden fixed bottom-0 right-4 mb-20">
           {isAuthenticated ? (
             <Link to="/profile">
-              <Button className="rounded-full h-12 w-12 bg-vibe-red hover:bg-opacity-90 shadow-lg p-0">
+              <Button className="rounded-full h-12 w-12 bg-aselit-purple hover:bg-aselit-purple-dark shadow-lg p-0">
                 <User size={20} />
               </Button>
             </Link>
           ) : (
             <Link to="/auth">
-              <Button className="rounded-full h-12 w-12 bg-vibe-red hover:bg-opacity-90 shadow-lg p-0">
+              <Button className="rounded-full h-12 w-12 bg-aselit-purple hover:bg-aselit-purple-dark shadow-lg p-0">
                 <LogIn size={20} />
               </Button>
             </Link>

@@ -35,6 +35,36 @@
 
     --radius: 0.75rem;
   }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 267 100% 62%;
+    --primary-foreground: 355 100% 100%;
+
+    --secondary: 193 100% 45%;
+    --secondary-foreground: 355 100% 100%;
+
+    --accent: 173 100% 41%;
+    --accent-foreground: 355 100% 100%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 267 100% 62%;
+  }
 }
 
 @layer base {
@@ -83,6 +113,13 @@
   --aselit-gradient: linear-gradient(45deg, var(--aselit-purple), var(--aselit-blue));
 }
 
+.dark {
+  --aselit-purple: #9b7aff;
+  --aselit-purple-dark: #8860ff;
+  --aselit-blue: #5ebdff;
+  --aselit-blue-dark: #3eacff;
+}
+
 /* Add these classes to Tailwind utilities */
 @layer utilities {
   .bg-aselit-purple {
@@ -112,6 +149,10 @@
   .border-aselit-blue {
     border-color: var(--aselit-blue);
   }
+
+  .glass-morphism {
+    @apply backdrop-blur-xl bg-white/5 dark:bg-black/20 border border-white/10 dark:border-white/5;
+  }
 }
 
 /* Custom scrollbar for a better user experience */
@@ -121,7 +162,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  @apply bg-gray-100 dark:bg-gray-800;
   border-radius: 10px;
 }
 
@@ -142,4 +183,9 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Dark mode transitions */
+.dark-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

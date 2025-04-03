@@ -3,18 +3,23 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
 import PostList from "../components/PostList";
+import PollList from "../components/PollList";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus } from "lucide-react";
 import { Post } from "../components/PostCard";
+import { Poll } from "../components/PollCreationForm";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const { isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [showCreatePostForm, setShowCreatePostForm] = useState(false);
+  const [contentType, setContentType] = useState("posts");
+  const navigate = useNavigate();
   
   // Initialize with sample posts if none exist
   useEffect(() => {
@@ -62,14 +67,52 @@ const HomePage = () => {
       
       localStorage.setItem("vibeswipe_posts", JSON.stringify(samplePosts));
     }
+    
+    // Initialize sample polls if none exist
+    const existingPolls = localStorage.getItem("aselit_polls");
+    if (!existingPolls) {
+      const samplePolls: Poll[] = [
+        {
+          id: "poll1",
+          question: "What meditation technique do you find most effective?",
+          options: [
+            { id: "opt1", text: "Mindfulness meditation", votes: 45 },
+            { id: "opt2", text: "Guided visualization", votes: 32 },
+            { id: "opt3", text: "Breathing exercises", votes: 67 },
+            { id: "opt4", text: "Body scan meditation", votes: 18 }
+          ],
+          totalVotes: 162,
+          author: "Mindful Maven",
+          authorImage: "https://randomuser.me/api/portraits/women/65.jpg",
+          category: "Headspace",
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString() // 3 days ago
+        },
+        {
+          id: "poll2",
+          question: "How often do you practice mindfulness?",
+          options: [
+            { id: "opt1", text: "Daily", votes: 85 },
+            { id: "opt2", text: "A few times a week", votes: 120 },
+            { id: "opt3", text: "Occasionally", votes: 95 },
+            { id: "opt4", text: "Rarely", votes: 40 }
+          ],
+          totalVotes: 340,
+          author: "Zen Master",
+          authorImage: "https://randomuser.me/api/portraits/men/32.jpg",
+          category: "Headspace",
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString() // 5 days ago
+        }
+      ];
+      
+      localStorage.setItem("aselit_polls", JSON.stringify(samplePolls));
+    }
   }, []);
   
-  const handleCreatePostSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
-    setShowCreatePostForm(false);
+  const navigateToCreate = (type: string) => {
+    navigate('/create', { state: { activeTab: type } });
   };
   
-  const categories = ["All", "Travel", "Food", "Fashion", "Technology", "Fitness", "Art", "Wellness"];
+  const categories = ["All", "Travel", "Food", "Fashion", "Technology", "Fitness", "Art", "Wellness", "Headspace"];
   
   return (
     <div className="container mx-auto px-4 pt-6 pb-20 md:pt-20 md:pb-10">
@@ -77,15 +120,15 @@ const HomePage = () => {
         <div className="lg:col-span-2">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Discover</h1>
-            <p className="text-gray-500">Explore the latest trends and stories</p>
+            <p className="text-muted-foreground">Explore the latest trends and stories</p>
           </div>
           
           <div className="mb-6">
-            <Card className="mb-6">
+            <Card className="mb-6 bg-card dark-transition">
               <CardContent className="py-4">
                 <div className="flex items-center">
                   <Input
-                    placeholder="Search posts..."
+                    placeholder="Search content..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
@@ -97,14 +140,21 @@ const HomePage = () => {
               </CardContent>
             </Card>
             
+            <Tabs value={contentType} onValueChange={setContentType} className="mb-6">
+              <TabsList className="w-full">
+                <TabsTrigger value="posts" className="flex-1">Posts</TabsTrigger>
+                <TabsTrigger value="polls" className="flex-1">Polls</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
             <div className="flex overflow-x-auto pb-4 mb-6 space-x-2 no-scrollbar">
               {categories.map(category => (
                 <button
                   key={category}
                   className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
                     category === selectedCategory 
-                      ? "bg-vibe-red text-white" 
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      ? "bg-aselit-purple text-white" 
+                      : "bg-muted text-foreground hover:bg-muted/80"
                   }`}
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -114,40 +164,59 @@ const HomePage = () => {
             </div>
           </div>
           
-          <PostList 
-            category={selectedCategory} 
-            searchQuery={searchQuery} 
-            refreshTrigger={refreshTrigger} 
-          />
+          {contentType === "posts" ? (
+            <PostList 
+              category={selectedCategory} 
+              searchQuery={searchQuery} 
+              refreshTrigger={refreshTrigger} 
+            />
+          ) : (
+            <PollList 
+              category={selectedCategory} 
+              refreshTrigger={refreshTrigger} 
+            />
+          )}
         </div>
         
         <div className="space-y-6">
           {isAuthenticated ? (
-            <>
-              {showCreatePostForm ? (
-                <CreatePostForm onSuccess={handleCreatePostSuccess} />
-              ) : (
-                <Card className="bg-gradient-to-r from-vibe-red/10 to-vibe-purple/10 border-none">
-                  <CardContent className="p-6 flex flex-col items-center text-center">
-                    <h3 className="text-xl font-bold mb-2">Share your thoughts</h3>
-                    <p className="text-gray-600 mb-4">Create a post and connect with the community</p>
-                    <Button 
-                      className="bg-vibe-red hover:bg-vibe-red/90"
-                      onClick={() => setShowCreatePostForm(true)}
-                    >
-                      Create a Post
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            <Card className="bg-gradient-to-r from-aselit-purple/10 to-aselit-blue/10 border-none">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-4">Create content</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button 
+                    className="flex flex-col items-center justify-center h-24 bg-aselit-purple/20 hover:bg-aselit-purple/30 text-foreground border border-transparent"
+                    onClick={() => navigateToCreate('post')}
+                  >
+                    <Plus className="h-6 w-6 mb-2" />
+                    <span>Post</span>
+                  </Button>
+                  
+                  <Button 
+                    className="flex flex-col items-center justify-center h-24 bg-aselit-purple/20 hover:bg-aselit-purple/30 text-foreground border border-transparent"
+                    onClick={() => navigateToCreate('poll')}
+                  >
+                    <Plus className="h-6 w-6 mb-2" />
+                    <span>Poll</span>
+                  </Button>
+                  
+                  <Button 
+                    className="flex flex-col items-center justify-center h-24 bg-aselit-purple/20 hover:bg-aselit-purple/30 text-foreground border border-transparent"
+                    onClick={() => navigateToCreate('video')}
+                  >
+                    <Plus className="h-6 w-6 mb-2" />
+                    <span>Video</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ) : (
-            <Card className="bg-gradient-to-r from-vibe-red/10 to-vibe-purple/10 border-none">
+            <Card className="bg-gradient-to-r from-aselit-purple/10 to-aselit-blue/10 border-none">
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <h3 className="text-xl font-bold mb-2">Join the conversation</h3>
                 <p className="text-gray-600 mb-4">Log in to create posts and interact with other users</p>
                 <Button 
-                  className="bg-vibe-red hover:bg-vibe-red/90"
+                  className="bg-aselit-purple hover:bg-aselit-purple/90"
                   onClick={() => window.location.href = "/auth"}
                 >
                   Log In / Sign Up
@@ -156,12 +225,12 @@ const HomePage = () => {
             </Card>
           )}
           
-          <Card>
+          <Card className="bg-card dark-transition">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">Popular Topics</h3>
               <div className="flex flex-wrap gap-2">
-                {["#photography", "#cooking", "#travel", "#fitness", "#technology", "#fashion", "#art", "#health"].map(tag => (
-                  <span key={tag} className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700 hover:bg-gray-200 cursor-pointer">
+                {["#photography", "#cooking", "#travel", "#fitness", "#technology", "#fashion", "#art", "#health", "#headspace", "#meditation"].map(tag => (
+                  <span key={tag} className="bg-muted px-3 py-1 rounded-full text-sm text-foreground hover:bg-muted/80 cursor-pointer">
                     {tag}
                   </span>
                 ))}
