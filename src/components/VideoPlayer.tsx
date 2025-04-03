@@ -229,8 +229,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <p className="text-white text-sm line-clamp-2">{description}</p>
       </div>
       
-      {/* CSS for heart animation */}
-      <style jsx>{`
+      {/* CSS for heart animation - fixing the error by removing jsx attribute */}
+      <style>
+        {`
         .heart-animation {
           position: absolute;
           top: 50%;
@@ -264,7 +265,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             transform: translate(-50%, -50%) scale(1.5);
           }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 };
