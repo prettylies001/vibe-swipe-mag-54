@@ -23,7 +23,7 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center md:mr-6">
           <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold bg-gradient-to-r from-aselit-purple to-aselit-blue bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-aselit-purple to-aselit-blue bg-clip-text text-transparent">
               Aselit
             </span>
           </Link>
@@ -48,7 +48,7 @@ const Navbar = () => {
           </div>
         </div>
         
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="flex items-center space-x-4">
           <Button 
             variant="ghost" 
             size="icon" 

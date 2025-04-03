@@ -105,7 +105,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       entries => {
         entries.forEach(entry => {
           if (entry.isIntersecting && videoRef.current) {
-            videoRef.current.play();
+            videoRef.current.play().catch(() => {
+              // Autoplay was prevented
+              console.log("Autoplay prevented, waiting for user interaction");
+            });
             setIsPlaying(true);
           } else if (videoRef.current) {
             videoRef.current.pause();
@@ -123,7 +126,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       videoRef.current.addEventListener('timeupdate', updateProgress);
       videoRef.current.addEventListener('ended', () => {
         videoRef.current!.currentTime = 0;
-        videoRef.current!.play();
+        videoRef.current!.play().catch(err => console.log("Replay prevented:", err));
       });
     }
 
@@ -229,7 +232,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <p className="text-white text-sm line-clamp-2">{description}</p>
       </div>
       
-      {/* CSS for heart animation - fixing the error by removing jsx attribute */}
+      {/* CSS for heart animation */}
       <style>
         {`
         .heart-animation {

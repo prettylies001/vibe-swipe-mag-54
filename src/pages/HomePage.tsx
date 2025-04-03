@@ -2,31 +2,40 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
-import PostList from "../components/PostList";
-import PollList from "../components/PollList";
+import PostCard, { Post } from "../components/PostCard";
+import PollCard from "../components/PollCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus } from "lucide-react";
-import { Post } from "../components/PostCard";
 import { Poll } from "../components/PollCreationForm";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+type ContentItem = Post | Poll & { type: 'post' | 'poll' };
 
 const HomePage = () => {
   const { isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [contentType, setContentType] = useState("posts");
+  const [combinedContent, setCombinedContent] = useState<ContentItem[]>([]);
   const navigate = useNavigate();
   
-  // Initialize with sample posts if none exist
+  // Load and combine content from localStorage
   useEffect(() => {
-    const existingPosts = localStorage.getItem("vibeswipe_posts");
-    if (!existingPosts) {
-      // Sample posts data
-      const samplePosts: Post[] = [
+    // Load posts
+    const storedPosts = localStorage.getItem("vibeswipe_posts");
+    let posts: Post[] = [];
+    
+    if (storedPosts) {
+      posts = JSON.parse(storedPosts).map((post: Post) => ({
+        ...post,
+        type: 'post'
+      }));
+    } else {
+      // Sample posts
+      posts = [
         {
           id: "1",
           title: "Breathtaking Views: The Most Beautiful Landscapes Around the World",
@@ -37,7 +46,8 @@ const HomePage = () => {
           authorImage: "https://randomuser.me/api/portraits/women/1.jpg",
           createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
           likes: 42,
-          comments: []
+          comments: [],
+          type: 'post'
         },
         {
           id: "2",
@@ -49,7 +59,8 @@ const HomePage = () => {
           authorImage: "https://randomuser.me/api/portraits/men/2.jpg",
           createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
           likes: 29,
-          comments: []
+          comments: [],
+          type: 'post'
         },
         {
           id: "3",
@@ -61,17 +72,26 @@ const HomePage = () => {
           authorImage: "https://randomuser.me/api/portraits/men/4.jpg",
           createdAt: new Date(Date.now() - 3600000 * 5).toISOString(), // 5 hours ago
           likes: 15,
-          comments: []
+          comments: [],
+          type: 'post'
         }
       ];
       
-      localStorage.setItem("vibeswipe_posts", JSON.stringify(samplePosts));
+      localStorage.setItem("vibeswipe_posts", JSON.stringify(posts));
     }
     
-    // Initialize sample polls if none exist
-    const existingPolls = localStorage.getItem("aselit_polls");
-    if (!existingPolls) {
-      const samplePolls: Poll[] = [
+    // Load polls
+    const storedPolls = localStorage.getItem("aselit_polls");
+    let polls: Poll[] = [];
+    
+    if (storedPolls) {
+      polls = JSON.parse(storedPolls).map((poll: Poll) => ({
+        ...poll,
+        type: 'poll'
+      }));
+    } else {
+      // Sample polls
+      polls = [
         {
           id: "poll1",
           question: "What meditation technique do you find most effective?",
@@ -85,7 +105,8 @@ const HomePage = () => {
           author: "Mindful Maven",
           authorImage: "https://randomuser.me/api/portraits/women/65.jpg",
           category: "Headspace",
-          createdAt: new Date(Date.now() - 86400000 * 3).toISOString() // 3 days ago
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+          type: 'poll'
         },
         {
           id: "poll2",
@@ -100,16 +121,99 @@ const HomePage = () => {
           author: "Zen Master",
           authorImage: "https://randomuser.me/api/portraits/men/32.jpg",
           category: "Headspace",
-          createdAt: new Date(Date.now() - 86400000 * 5).toISOString() // 5 days ago
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
+          type: 'poll'
         }
       ];
       
-      localStorage.setItem("aselit_polls", JSON.stringify(samplePolls));
+      localStorage.setItem("aselit_polls", JSON.stringify(polls));
     }
-  }, []);
+    
+    // Combine and sort by date (newest first)
+    const combined = [...posts, ...polls].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    setCombinedContent(combined);
+  }, [refreshTrigger]);
+  
+  // Filter content by category and search query
+  const filteredContent = combinedContent.filter(item => {
+    if (selectedCategory !== "All" && item.category !== selectedCategory) {
+      return false;
+    }
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if ('type' in item && item.type === 'post') {
+        const post = item as Post & {type: 'post'};
+        return post.title.toLowerCase().includes(query) || 
+               post.content.toLowerCase().includes(query);
+      } else if ('type' in item && item.type === 'poll') {
+        const poll = item as Poll & {type: 'poll'};
+        return poll.question.toLowerCase().includes(query);
+      }
+    }
+    
+    return true;
+  });
   
   const navigateToCreate = (type: string) => {
     navigate('/create', { state: { activeTab: type } });
+  };
+  
+  const handleLike = (postId: string) => {
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to like posts");
+      return;
+    }
+    
+    const storedPosts = localStorage.getItem("vibeswipe_posts");
+    if (storedPosts) {
+      const posts = JSON.parse(storedPosts);
+      const updatedPosts = posts.map((post: Post) => {
+        if (post.id === postId) {
+          return { ...post, likes: post.likes + 1 };
+        }
+        return post;
+      });
+      
+      localStorage.setItem("vibeswipe_posts", JSON.stringify(updatedPosts));
+      setRefreshTrigger(prev => prev + 1);
+    }
+  };
+  
+  const handleVote = (pollId: string, optionId: string) => {
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to vote");
+      return;
+    }
+    
+    const storedPolls = localStorage.getItem("aselit_polls");
+    if (storedPolls) {
+      const polls = JSON.parse(storedPolls);
+      const updatedPolls = polls.map((poll: Poll) => {
+        if (poll.id === pollId) {
+          const updatedOptions = poll.options.map(option => {
+            if (option.id === optionId) {
+              return { ...option, votes: option.votes + 1 };
+            }
+            return option;
+          });
+          
+          return {
+            ...poll,
+            options: updatedOptions,
+            totalVotes: poll.totalVotes + 1
+          };
+        }
+        return poll;
+      });
+      
+      localStorage.setItem("aselit_polls", JSON.stringify(updatedPolls));
+      setRefreshTrigger(prev => prev + 1);
+      toast.success("Vote recorded successfully!");
+    }
   };
   
   const categories = ["All", "Travel", "Food", "Fashion", "Technology", "Fitness", "Art", "Wellness", "Headspace"];
@@ -140,13 +244,6 @@ const HomePage = () => {
               </CardContent>
             </Card>
             
-            <Tabs value={contentType} onValueChange={setContentType} className="mb-6">
-              <TabsList className="w-full">
-                <TabsTrigger value="posts" className="flex-1">Posts</TabsTrigger>
-                <TabsTrigger value="polls" className="flex-1">Polls</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
             <div className="flex overflow-x-auto pb-4 mb-6 space-x-2 no-scrollbar">
               {categories.map(category => (
                 <button
@@ -164,17 +261,35 @@ const HomePage = () => {
             </div>
           </div>
           
-          {contentType === "posts" ? (
-            <PostList 
-              category={selectedCategory} 
-              searchQuery={searchQuery} 
-              refreshTrigger={refreshTrigger} 
-            />
+          {filteredContent.length === 0 ? (
+            <div className="text-center py-8">
+              <h3 className="text-lg font-medium">No content found</h3>
+              <p className="text-muted-foreground mt-2">
+                {selectedCategory !== "All" 
+                  ? `There is no content in the ${selectedCategory} category yet.` 
+                  : searchQuery 
+                    ? `No content matches "${searchQuery}".`
+                    : "Be the first to create content!"}
+              </p>
+            </div>
           ) : (
-            <PollList 
-              category={selectedCategory} 
-              refreshTrigger={refreshTrigger} 
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredContent.map(item => (
+                'type' in item && item.type === 'post' ? (
+                  <PostCard 
+                    key={item.id} 
+                    post={item as Post}
+                    onLike={handleLike}
+                  />
+                ) : (
+                  <PollCard 
+                    key={item.id} 
+                    poll={item as Poll}
+                    onVote={handleVote}
+                  />
+                )
+              ))}
+            </div>
           )}
         </div>
         
