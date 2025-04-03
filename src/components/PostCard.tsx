@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,9 +30,10 @@ export interface Post {
 interface PostCardProps {
   post: Post;
   className?: string;
+  onLike?: (postId: string) => void;
 }
 
-const PostCard = ({ post, className = "" }: PostCardProps) => {
+const PostCard = ({ post, className = "", onLike }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const formattedDate = new Date(post.createdAt).toLocaleDateString('en-US', {
@@ -47,6 +47,10 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
       setLikeCount(prev => prev + 1);
       setLiked(true);
       toast.success("Post liked!");
+      
+      if (onLike) {
+        onLike(post.id);
+      }
     } else {
       setLikeCount(prev => prev - 1);
       setLiked(false);
@@ -58,11 +62,9 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
     toast.success("Link copied to clipboard!");
   };
 
-  // Function to render embedUrl content
   const renderEmbed = () => {
     if (!post.embedUrl) return null;
     
-    // YouTube embed
     if (post.embedUrl.includes('youtube.com') || post.embedUrl.includes('youtu.be')) {
       let videoId;
       if (post.embedUrl.includes('youtube.com')) {
@@ -90,7 +92,6 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
       }
     }
     
-    // Twitter/X embed
     if (post.embedUrl.includes('twitter.com') || post.embedUrl.includes('x.com')) {
       return (
         <div className="mt-4">
@@ -101,7 +102,6 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
       );
     }
     
-    // Instagram embed
     if (post.embedUrl.includes('instagram.com')) {
       return (
         <div className="mt-4 overflow-hidden">
@@ -115,8 +115,7 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
         </div>
       );
     }
-
-    // Facebook embed
+    
     if (post.embedUrl.includes('facebook.com')) {
       return (
         <div className="mt-4">
@@ -134,10 +133,8 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
     return <a href={post.embedUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mt-4 block">View embedded content</a>;
   };
   
-  // Load Twitter widget script
   useEffect(() => {
     if (post.embedUrl?.includes('twitter.com') || post.embedUrl?.includes('x.com')) {
-      // Add Twitter widget.js script
       const script = document.createElement('script');
       script.src = "https://platform.twitter.com/widgets.js";
       script.async = true;
@@ -148,7 +145,6 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
       };
     }
     
-    // Load Instagram embed script
     if (post.embedUrl?.includes('instagram.com')) {
       const script = document.createElement('script');
       script.src = "//www.instagram.com/embed.js";
@@ -190,7 +186,6 @@ const PostCard = ({ post, className = "" }: PostCardProps) => {
           {post.content}
         </p>
         
-        {/* Render embed if any */}
         {renderEmbed()}
         
         <div className="flex items-center mt-4">
