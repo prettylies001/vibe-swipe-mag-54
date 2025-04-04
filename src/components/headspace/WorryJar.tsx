@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Archive, Trash2, RefreshCw, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { dbOperations } from "../../utils/db";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -29,22 +29,28 @@ const WorryJar = () => {
   const [worries, setWorries] = useState<Worry[]>([]);
   const [currentWorry, setCurrentWorry] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
+  const [loading, setLoading] = useState(true);
   
-  // Load worries from localStorage
+  // Load worries from database
   useEffect(() => {
-    const storedWorries = localStorage.getItem("aselit_worry_jar");
-    if (storedWorries) {
-      setWorries(JSON.parse(storedWorries));
-    }
+    const loadWorries = async () => {
+      setLoading(true);
+      try {
+        const dbWorries = await dbOperations.worries.getAll();
+        setWorries(dbWorries || []);
+      } catch (error) {
+        console.error("Error loading worries:", error);
+        toast.error("Failed to load thoughts");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadWorries();
   }, []);
   
-  // Save worries to localStorage
-  useEffect(() => {
-    localStorage.setItem("aselit_worry_jar", JSON.stringify(worries));
-  }, [worries]);
-  
   // Add a new worry
-  const addWorry = () => {
+  const addWorry = async () => {
     if (!currentWorry.trim()) {
       toast.error("Please enter your worry or thought");
       return;
@@ -57,23 +63,53 @@ const WorryJar = () => {
       archived: false
     };
     
-    setWorries([newWorry, ...worries]);
-    setCurrentWorry("");
-    toast.success("Thought added to the jar");
+    try {
+      await dbOperations.worries.add(newWorry);
+      setWorries([newWorry, ...worries]);
+      setCurrentWorry("");
+      toast.success("Thought added to the jar");
+    } catch (error) {
+      console.error("Error adding worry:", error);
+      toast.error("Failed to add thought");
+    }
   };
   
   // Archive a worry
-  const archiveWorry = (id: string) => {
-    setWorries(worries.map(worry => 
-      worry.id === id ? { ...worry, archived: true } : worry
-    ));
-    toast.success("Thought archived");
+  const archiveWorry = async (id: string) => {
+    try {
+      await dbOperations.worries.archive(id);
+      setWorries(worries.map(worry => 
+        worry.id === id ? { ...worry, archived: true } : worry
+      ));
+      toast.success("Thought archived");
+    } catch (error) {
+      console.error("Error archiving worry:", error);
+      toast.error("Failed to archive thought");
+    }
   };
   
   // Delete a worry
-  const deleteWorry = (id: string) => {
-    setWorries(worries.filter(worry => worry.id !== id));
-    toast.success("Thought removed");
+  const deleteWorry = async (id: string) => {
+    try {
+      await dbOperations.worries.delete(id);
+      setWorries(worries.filter(worry => worry.id !== id));
+      toast.success("Thought removed");
+    } catch (error) {
+      console.error("Error deleting worry:", error);
+      toast.error("Failed to remove thought");
+    }
+  };
+  
+  // Clear all worries
+  const clearAllWorries = async () => {
+    try {
+      await dbOperations.worries.set([]);
+      setWorries([]);
+      toast.success("All thoughts cleared");
+    } catch (error) {
+      console.error("Error clearing worries:", error);
+      toast.error("Failed to clear thoughts");
+    }
   };
   
   // Format date
@@ -87,12 +123,6 @@ const WorryJar = () => {
     });
   };
   
-  // Clear all worries
-  const clearAllWorries = () => {
-    setWorries([]);
-    toast.success("All thoughts cleared");
-  };
-  
   // Filter worries based on selected filter
   const filteredWorries = worries.filter(worry => {
     if (filter === "all") return true;
@@ -100,6 +130,16 @@ const WorryJar = () => {
     if (filter === "archived") return worry.archived;
     return true;
   });
+  
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          Loading worry jar...
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card className="animate-fade-in">

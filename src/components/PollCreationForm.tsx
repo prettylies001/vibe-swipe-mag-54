@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
+import { dbOperations } from "../utils/db";
 
 interface PollCreationFormProps {
   onSuccess?: () => void;
@@ -89,9 +89,6 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       // Create a new poll object
       const newPoll: Poll = {
         id: Math.random().toString(36).substring(2, 9),
@@ -108,14 +105,8 @@ const PollCreationForm: React.FC<PollCreationFormProps> = ({ onSuccess }) => {
         category
       };
       
-      // Get existing polls from localStorage or initialize empty array
-      const existingPolls = JSON.parse(localStorage.getItem("vibeswipe_polls") || "[]");
-      
-      // Add new poll to beginning of array
-      const updatedPolls = [newPoll, ...existingPolls];
-      
-      // Save updated polls to localStorage
-      localStorage.setItem("vibeswipe_polls", JSON.stringify(updatedPolls));
+      // Save poll to database
+      await dbOperations.polls.add(newPoll);
       
       // Show success message
       toast.success("Poll created successfully!");

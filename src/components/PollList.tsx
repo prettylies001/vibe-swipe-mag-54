@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import PollCard from "./PollCard";
 import { Poll } from "./PollCreationForm";
 import { toast } from "sonner";
+import { dbOperations } from "../utils/db";
 
 interface PollListProps {
   category?: string;
@@ -13,51 +14,25 @@ interface PollListProps {
 const PollList: React.FC<PollListProps> = ({ category = "All", refreshTrigger = 0 }) => {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [filteredPolls, setFilteredPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useAuth();
   
-  // Load polls from localStorage
+  // Load polls from database
   useEffect(() => {
-    const storedPolls = localStorage.getItem("vibeswipe_polls");
-    if (storedPolls) {
-      setPolls(JSON.parse(storedPolls));
-    } else {
-      // Sample polls data if none exists
-      const samplePolls: Poll[] = [
-        {
-          id: "p1",
-          question: "What's your favorite programming language?",
-          options: [
-            { id: "o1", text: "JavaScript", votes: 15 },
-            { id: "o2", text: "Python", votes: 12 },
-            { id: "o3", text: "TypeScript", votes: 8 },
-            { id: "o4", text: "Java", votes: 5 }
-          ],
-          author: "Robert Fox",
-          authorImage: "https://randomuser.me/api/portraits/men/2.jpg",
-          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-          totalVotes: 40,
-          category: "Technology"
-        },
-        {
-          id: "p2",
-          question: "Which city would you most like to visit?",
-          options: [
-            { id: "o1", text: "Paris", votes: 22 },
-            { id: "o2", text: "Tokyo", votes: 18 },
-            { id: "o3", text: "New York", votes: 14 },
-            { id: "o4", text: "London", votes: 12 }
-          ],
-          author: "Jane Cooper",
-          authorImage: "https://randomuser.me/api/portraits/women/1.jpg",
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-          totalVotes: 66,
-          category: "Travel"
-        }
-      ];
-      
-      localStorage.setItem("vibeswipe_polls", JSON.stringify(samplePolls));
-      setPolls(samplePolls);
-    }
+    const loadPolls = async () => {
+      setLoading(true);
+      try {
+        const dbPolls = await dbOperations.polls.getAll();
+        setPolls(dbPolls);
+      } catch (error) {
+        console.error("Error loading polls:", error);
+        toast.error("Failed to load polls");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPolls();
   }, [refreshTrigger]);
   
   // Filter polls by category
@@ -69,34 +44,49 @@ const PollList: React.FC<PollListProps> = ({ category = "All", refreshTrigger = 
     }
   }, [polls, category]);
   
-  const handleVote = (pollId: string, optionId: string) => {
+  const handleVote = async (pollId: string, optionId: string) => {
     if (!isAuthenticated) {
       toast.error("You must be logged in to vote");
       return;
     }
     
-    const updatedPolls = polls.map(poll => {
-      if (poll.id === pollId) {
-        const updatedOptions = poll.options.map(option => {
-          if (option.id === optionId) {
-            return { ...option, votes: option.votes + 1 };
-          }
-          return option;
-        });
-        
-        return {
-          ...poll,
-          options: updatedOptions,
-          totalVotes: poll.totalVotes + 1
-        };
-      }
-      return poll;
-    });
-    
-    setPolls(updatedPolls);
-    localStorage.setItem("vibeswipe_polls", JSON.stringify(updatedPolls));
-    toast.success("Vote recorded successfully!");
+    try {
+      await dbOperations.polls.vote(pollId, optionId);
+      
+      // Update local state to reflect the vote
+      const updatedPolls = polls.map(poll => {
+        if (poll.id === pollId) {
+          const updatedOptions = poll.options.map(option => {
+            if (option.id === optionId) {
+              return { ...option, votes: option.votes + 1 };
+            }
+            return option;
+          });
+          
+          return {
+            ...poll,
+            options: updatedOptions,
+            totalVotes: poll.totalVotes + 1
+          };
+        }
+        return poll;
+      });
+      
+      setPolls(updatedPolls);
+      toast.success("Vote recorded successfully!");
+    } catch (error) {
+      console.error("Error recording vote:", error);
+      toast.error("Failed to record vote");
+    }
   };
+  
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <p>Loading polls...</p>
+      </div>
+    );
+  }
   
   if (filteredPolls.length === 0) {
     return (
