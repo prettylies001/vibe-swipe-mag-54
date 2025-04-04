@@ -1,8 +1,30 @@
 
-import { QuickDB } from 'quick.db';
+// Utility functions for localStorage-based persistence
 
 // Initialize the database
-const db = new QuickDB();
+class LocalDB {
+  async get(key: string) {
+    try {
+      const value = localStorage.getItem(`vibeswipe_${key}`);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      console.error(`Error getting ${key}:`, error);
+      return null;
+    }
+  }
+
+  async set(key: string, value: any) {
+    try {
+      localStorage.setItem(`vibeswipe_${key}`, JSON.stringify(value));
+      return value;
+    } catch (error) {
+      console.error(`Error setting ${key}:`, error);
+      return null;
+    }
+  }
+}
+
+const db = new LocalDB();
 
 // Define database operations
 export const dbOperations = {
