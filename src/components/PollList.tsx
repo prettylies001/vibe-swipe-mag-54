@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import PollCard from "./PollCard";
 import { Poll } from "./PollCreationForm";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PollListProps {
   category?: string;
@@ -15,49 +16,55 @@ const PollList: React.FC<PollListProps> = ({ category = "All", refreshTrigger = 
   const [filteredPolls, setFilteredPolls] = useState<Poll[]>([]);
   const { isAuthenticated } = useAuth();
   
-  // Load polls from localStorage
+  // Load polls from Supabase
   useEffect(() => {
-    const storedPolls = localStorage.getItem("vibeswipe_polls");
-    if (storedPolls) {
-      setPolls(JSON.parse(storedPolls));
-    } else {
-      // Sample polls data if none exists
-      const samplePolls: Poll[] = [
-        {
-          id: "p1",
-          question: "What's your favorite programming language?",
-          options: [
-            { id: "o1", text: "JavaScript", votes: 15 },
-            { id: "o2", text: "Python", votes: 12 },
-            { id: "o3", text: "TypeScript", votes: 8 },
-            { id: "o4", text: "Java", votes: 5 }
-          ],
-          author: "Robert Fox",
-          authorImage: "https://randomuser.me/api/portraits/men/2.jpg",
-          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-          totalVotes: 40,
-          category: "Technology"
-        },
-        {
-          id: "p2",
-          question: "Which city would you most like to visit?",
-          options: [
-            { id: "o1", text: "Paris", votes: 22 },
-            { id: "o2", text: "Tokyo", votes: 18 },
-            { id: "o3", text: "New York", votes: 14 },
-            { id: "o4", text: "London", votes: 12 }
-          ],
-          author: "Jane Cooper",
-          authorImage: "https://randomuser.me/api/portraits/women/1.jpg",
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-          totalVotes: 66,
-          category: "Travel"
+    const fetchPolls = async () => {
+      try {
+        let query = supabase
+          .from('polls')
+          .select(`
+            id,
+            question,
+            category,
+            created_at,
+            total_votes,
+            user_id,
+            profiles:user_id(username, avatar_url),
+            options:poll_options(id, text, votes)
+          `)
+          .order('created_at', { ascending: false });
+          
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error("Error fetching polls:", error);
+          return;
         }
-      ];
-      
-      localStorage.setItem("vibeswipe_polls", JSON.stringify(samplePolls));
-      setPolls(samplePolls);
-    }
+        
+        if (data) {
+          const formattedPolls = data.map(poll => ({
+            id: poll.id,
+            question: poll.question,
+            options: poll.options.map((option: any) => ({
+              id: option.id,
+              text: option.text,
+              votes: option.votes || 0
+            })),
+            author: poll.profiles?.username || "Anonymous",
+            authorImage: poll.profiles?.avatar_url || "https://randomuser.me/api/portraits/lego/1.jpg",
+            createdAt: poll.created_at,
+            totalVotes: poll.total_votes || 0,
+            category: poll.category
+          }));
+          
+          setPolls(formattedPolls);
+        }
+      } catch (error) {
+        console.error("Error in fetchPolls:", error);
+      }
+    };
+    
+    fetchPolls();
   }, [refreshTrigger]);
   
   // Filter polls by category
@@ -69,33 +76,111 @@ const PollList: React.FC<PollListProps> = ({ category = "All", refreshTrigger = 
     }
   }, [polls, category]);
   
-  const handleVote = (pollId: string, optionId: string) => {
+  const handleVote = async (pollId: string, optionId: string) => {
     if (!isAuthenticated) {
       toast.error("You must be logged in to vote");
       return;
     }
     
-    const updatedPolls = polls.map(poll => {
-      if (poll.id === pollId) {
-        const updatedOptions = poll.options.map(option => {
-          if (option.id === optionId) {
-            return { ...option, votes: option.votes + 1 };
-          }
-          return option;
+    try {
+      // Check if user has already voted in this poll
+      const { data: existingVotes, error: checkError } = await supabase
+        .from('poll_votes')
+        .select()
+        .eq('poll_id', pollId)
+        .eq('user_id', supabase.auth.getUser().then(({ data }) => data.user?.id));
+        
+      if (checkError) {
+        console.error("Error checking votes:", checkError);
+        return;
+      }
+      
+      if (existingVotes && existingVotes.length > 0) {
+        toast.error("You have already voted in this poll");
+        return;
+      }
+      
+      // Begin a transaction to update votes
+      // First, increment vote count for the option
+      const { error: optionError } = await supabase.rpc('increment_option_vote', { 
+        option_id_param: optionId 
+      });
+      
+      if (optionError) {
+        console.error("Error updating option votes:", optionError);
+        toast.error("Failed to record your vote");
+        return;
+      }
+      
+      // Next, increment the total votes for the poll
+      const { error: pollError } = await supabase.rpc('increment_poll_votes', { 
+        poll_id_param: pollId 
+      });
+      
+      if (pollError) {
+        console.error("Error updating poll votes:", pollError);
+        toast.error("Failed to record your vote");
+        return;
+      }
+      
+      // Finally, record the user's vote
+      const { error: voteError } = await supabase
+        .from('poll_votes')
+        .insert({
+          poll_id: pollId,
+          option_id: optionId,
+          user_id: (await supabase.auth.getUser()).data.user?.id
         });
         
-        return {
-          ...poll,
-          options: updatedOptions,
-          totalVotes: poll.totalVotes + 1
-        };
+      if (voteError) {
+        console.error("Error recording vote:", voteError);
+        toast.error("Failed to record your vote");
+        return;
       }
-      return poll;
-    });
-    
-    setPolls(updatedPolls);
-    localStorage.setItem("vibeswipe_polls", JSON.stringify(updatedPolls));
-    toast.success("Vote recorded successfully!");
+      
+      toast.success("Vote recorded successfully!");
+      
+      // Refresh polls after voting
+      const { data: updatedPoll, error: fetchError } = await supabase
+        .from('polls')
+        .select(`
+          id,
+          question,
+          category,
+          created_at,
+          total_votes,
+          user_id,
+          profiles:user_id(username, avatar_url),
+          options:poll_options(id, text, votes)
+        `)
+        .eq('id', pollId)
+        .single();
+        
+      if (fetchError || !updatedPoll) {
+        console.error("Error fetching updated poll:", fetchError);
+        return;
+      }
+      
+      // Update the local state with the updated poll
+      setPolls(prevPolls => prevPolls.map(poll => {
+        if (poll.id === pollId) {
+          return {
+            ...poll,
+            options: updatedPoll.options.map((option: any) => ({
+              id: option.id,
+              text: option.text,
+              votes: option.votes || 0
+            })),
+            totalVotes: updatedPoll.total_votes || 0
+          };
+        }
+        return poll;
+      }));
+      
+    } catch (error) {
+      console.error("Error in handleVote:", error);
+      toast.error("An error occurred while recording your vote");
+    }
   };
   
   if (filteredPolls.length === 0) {

@@ -9,7 +9,302 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_options: {
+        Row: {
+          id: string
+          poll_id: string
+          text: string
+          votes: number | null
+        }
+        Insert: {
+          id?: string
+          poll_id: string
+          text: string
+          votes?: number | null
+        }
+        Update: {
+          id?: string
+          poll_id?: string
+          text?: string
+          votes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          question: string
+          total_votes: number | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          question: string
+          total_votes?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          question?: string
+          total_votes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          embed_url: string | null
+          id: string
+          image_url: string | null
+          likes: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          is_admin?: boolean | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          username?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          likes: number | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          user_id: string
+          video_url: string
+          views: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          user_id: string
+          video_url: string
+          views?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          user_id?: string
+          video_url?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worry_jar: {
+        Row: {
+          archived: boolean | null
+          created_at: string
+          id: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          created_at?: string
+          id?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          created_at?: string
+          id?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worry_jar_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

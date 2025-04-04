@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Poll, PollOption } from "./PollCreationForm";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PollCardProps {
   poll: Poll;
@@ -15,9 +16,33 @@ interface PollCardProps {
 }
 
 const PollCard: React.FC<PollCardProps> = ({ poll, onVote }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [userVoted, setUserVoted] = useState(false);
+  
+  // Check if the current user has already voted in this poll
+  useEffect(() => {
+    const checkIfUserVoted = async () => {
+      if (!isAuthenticated || !currentUser) return;
+      
+      try {
+        const { data } = await supabase
+          .from('poll_votes')
+          .select()
+          .eq('poll_id', poll.id)
+          .eq('user_id', currentUser.id);
+          
+        if (data && data.length > 0) {
+          setUserVoted(true);
+          setSelectedOption(data[0].option_id);
+        }
+      } catch (error) {
+        console.error("Error checking if user voted:", error);
+      }
+    };
+    
+    checkIfUserVoted();
+  }, [poll.id, isAuthenticated, currentUser]);
   
   // Format date to relative time
   const formatRelativeTime = (dateString: string) => {
