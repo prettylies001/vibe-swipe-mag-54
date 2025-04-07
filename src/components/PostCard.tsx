@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Heart, Share2 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 export interface Comment {
   id: string;
@@ -76,7 +78,7 @@ const PostCard = ({ post, className = "", onLike }: PostCardProps) => {
       
       if (videoId) {
         return (
-          <div className="aspect-video w-full mt-4">
+          <div className="aspect-video w-full mt-4 rounded-md overflow-hidden">
             <iframe 
               width="100%" 
               height="100%" 
@@ -92,92 +94,38 @@ const PostCard = ({ post, className = "", onLike }: PostCardProps) => {
       }
     }
     
-    if (post.embedUrl.includes('twitter.com') || post.embedUrl.includes('x.com')) {
-      return (
-        <div className="mt-4">
-          <blockquote className="twitter-tweet">
-            <a href={post.embedUrl}></a>
-          </blockquote>
-        </div>
-      );
-    }
-    
-    if (post.embedUrl.includes('instagram.com')) {
-      return (
-        <div className="mt-4 overflow-hidden">
-          <blockquote 
-            className="instagram-media rounded-md" 
-            data-instgrm-permalink={post.embedUrl}
-            style={{ maxWidth: '100%', border: '1px solid #ddd', padding: '10px' }}
-          >
-            <a href={post.embedUrl} target="_blank" rel="noreferrer">View on Instagram</a>
-          </blockquote>
-        </div>
-      );
-    }
-    
-    if (post.embedUrl.includes('facebook.com')) {
-      return (
-        <div className="mt-4">
-          <div 
-            className="fb-post" 
-            data-href={post.embedUrl}
-            data-width="100%"
-          >
-            <a href={post.embedUrl} target="_blank" rel="noreferrer">View on Facebook</a>
-          </div>
-        </div>
-      );
-    }
-    
-    return <a href={post.embedUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mt-4 block">View embedded content</a>;
+    // For non-YouTube embeds, show a simpler link
+    return <a href={post.embedUrl} target="_blank" rel="noreferrer" className="text-aselit-blue hover:underline mt-4 block">View embedded content</a>;
   };
   
   useEffect(() => {
-    if (post.embedUrl?.includes('twitter.com') || post.embedUrl?.includes('x.com')) {
-      const script = document.createElement('script');
-      script.src = "https://platform.twitter.com/widgets.js";
-      script.async = true;
-      document.body.appendChild(script);
-      
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
-    
-    if (post.embedUrl?.includes('instagram.com')) {
-      const script = document.createElement('script');
-      script.src = "//www.instagram.com/embed.js";
-      script.async = true;
-      document.body.appendChild(script);
-      
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
+    // Reset any iframe-related scripts if needed
+    return () => {
+      // Cleanup code if necessary
+    };
   }, [post.embedUrl]);
   
   return (
-    <Card className={`overflow-hidden ${className}`}>
+    <Card className={`overflow-hidden card-hover ${className}`}>
       {post.imageUrl && (
         <Link to={`/article/${post.id}`} className="block overflow-hidden">
           <img 
             src={post.imageUrl} 
             alt={post.title} 
-            className="w-full h-48 object-cover transform transition hover:scale-105"
+            className="w-full h-52 object-cover transform transition hover:scale-105"
           />
         </Link>
       )}
       
-      <CardContent className="p-4">
+      <CardContent className="p-5">
         {post.category && (
-          <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+          <Badge variant="secondary" className="mb-3">
             {post.category}
-          </span>
+          </Badge>
         )}
         
         <Link to={`/article/${post.id}`}>
-          <h3 className="font-semibold text-lg mt-2 hover:text-aselit-purple transition-colors line-clamp-2">
+          <h3 className="font-semibold text-xl mb-2 hover:text-aselit-purple transition-colors line-clamp-2">
             {post.title}
           </h3>
         </Link>
@@ -188,37 +136,41 @@ const PostCard = ({ post, className = "", onLike }: PostCardProps) => {
         
         {renderEmbed()}
         
-        <div className="flex items-center mt-4">
-          <Avatar className="h-8 w-8">
+        <div className="flex items-center mt-5">
+          <Avatar className="h-10 w-10 border-2 border-white">
             <AvatarImage src={post.authorImage} />
-            <AvatarFallback>{post.author.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-aselit-purple text-white">
+              {post.author.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
-          <div className="ml-2">
+          <div className="ml-3">
             <p className="text-sm font-medium">{post.author}</p>
             <p className="text-xs text-muted-foreground">{formattedDate}</p>
           </div>
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-border mt-4">
+        <div className="flex items-center space-x-6">
           <button 
-            className={`flex items-center space-x-1 ${liked ? 'text-red-500' : 'text-muted-foreground'}`}
+            className={`flex items-center space-x-1.5 ${liked ? 'text-red-500' : 'text-muted-foreground'} hover:text-red-500 transition-colors`}
             onClick={handleLike}
+            aria-label="Like post"
           >
             <Heart size={18} className={liked ? 'fill-current' : ''} />
-            <span>{likeCount}</span>
+            <span className="text-sm">{likeCount}</span>
           </button>
           
-          <Link to={`/article/${post.id}`} className="flex items-center space-x-1 text-muted-foreground">
+          <Link to={`/article/${post.id}`} className="flex items-center space-x-1.5 text-muted-foreground hover:text-aselit-purple transition-colors">
             <MessageCircle size={18} />
-            <span>{post.comments.length}</span>
+            <span className="text-sm">{post.comments.length}</span>
           </Link>
         </div>
         
         <button 
           className="text-muted-foreground hover:text-aselit-purple transition-colors"
           onClick={handleShare}
+          aria-label="Share post"
         >
           <Share2 size={18} />
         </button>

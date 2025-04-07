@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Home, Video, LogIn, User, PlusCircle, Brain } from "lucide-react";
+import { Home, LogIn, User, PlusCircle, Brain } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,6 @@ const Navbar = () => {
             >
               <Home size={24} />
               <span className="text-xs md:text-sm">Discover</span>
-            </Link>
-            <Link 
-              to="/videos" 
-              className="flex flex-col items-center md:flex-row md:space-x-2 text-foreground hover:text-aselit-purple transition-colors"
-            >
-              <Video size={24} />
-              <span className="text-xs md:text-sm">Videos</span>
             </Link>
             <Link 
               to="/headspace" 
@@ -65,7 +58,7 @@ const Navbar = () => {
                   <Button variant="ghost" className="rounded-full p-0 h-10 w-10">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username} />
-                      <AvatarFallback>{currentUser?.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>{currentUser?.username?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
