@@ -9,7 +9,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
-import VideosPage from "./pages/VideosPage";
 import ArticlePage from "./pages/ArticlePage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -35,7 +34,6 @@ function App() {
               <main className="pt-0 md:pt-16">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/videos" element={<VideosPage />} />
                   <Route path="/article/:id" element={<ArticlePage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/profile" element={<ProfilePage />} />

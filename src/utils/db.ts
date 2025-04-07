@@ -78,21 +78,6 @@ export const dbOperations = {
     }
   },
   
-  // Video operations
-  videos: {
-    getAll: async () => {
-      return await db.get('videos') || [];
-    },
-    set: async (videos: any[]) => {
-      return await db.set('videos', videos);
-    },
-    add: async (video: any) => {
-      const videos = await db.get('videos') || [];
-      videos.unshift(video);
-      return await db.set('videos', videos);
-    }
-  },
-  
   // Worry jar operations
   worries: {
     getAll: async () => {

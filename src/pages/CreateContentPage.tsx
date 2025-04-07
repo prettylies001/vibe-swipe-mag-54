@@ -3,10 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreatePostForm from "../components/CreatePostForm";
-import VideoUploadForm from "../components/VideoUploadForm";
 import PollCreationForm from "../components/PollCreationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Image, BarChart2 } from "lucide-react";
+import { Image, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
 import { initializeDatabase } from "../utils/db";
 
@@ -16,7 +15,7 @@ const CreateContentPage = () => {
   const navigate = useNavigate();
   const [dbInitialized, setDbInitialized] = useState(false);
   const defaultTab = location.state?.activeTab || "post";
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState(defaultTab === "video" ? "post" : defaultTab);
 
   // Initialize database when component mounts
   useEffect(() => {
@@ -47,12 +46,6 @@ const CreateContentPage = () => {
     // Navigate programmatically after success
     navigate("/");
   };
-
-  const handleVideoSuccess = () => {
-    toast.success("Video uploaded successfully!");
-    // Navigate programmatically after success
-    navigate("/videos");
-  };
   
   const handlePollSuccess = () => {
     toast.success("Poll created successfully!");
@@ -65,15 +58,11 @@ const CreateContentPage = () => {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Create Content</h1>
         
-        <Tabs defaultValue={defaultTab} value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 mb-8">
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 mb-8">
             <TabsTrigger value="post" className="flex items-center gap-2">
               <Image className="h-4 w-4" />
               <span>Post</span>
-            </TabsTrigger>
-            <TabsTrigger value="video" className="flex items-center gap-2">
-              <Video className="h-4 w-4" />
-              <span>Video</span>
             </TabsTrigger>
             <TabsTrigger value="poll" className="flex items-center gap-2">
               <BarChart2 className="h-4 w-4" />
@@ -83,10 +72,6 @@ const CreateContentPage = () => {
           
           <TabsContent value="post">
             <CreatePostForm onSuccess={handlePostSuccess} />
-          </TabsContent>
-          
-          <TabsContent value="video">
-            <VideoUploadForm onSuccess={handleVideoSuccess} />
           </TabsContent>
           
           <TabsContent value="poll">
